@@ -141,30 +141,6 @@ def custom_collate_fn(batch):
     return padded_videos, classes
 
 if __name__ == "__main__":
-    # Debugging: Initializing the dataset
-    # try:
-    #     dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
-    #     print(f"Dataset loaded with {len(dataset)} samples.")
-
-    #     # Loading a sample to test
-    #     sample_video, sample_class = dataset[0]
-    #     print(f"Sample video shape: {sample_video.shape}")
-    #     print(f"Sample class ID: {sample_class}")
-
-    #     # Plotting the first few frames of the video
-    #     print("Visualizing the video frames...")
-    #     plot_video_frames(sample_video, num_frames=5)
-
-    #     # Using DataLoader for batching
-    #     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    #     for batch_videos, batch_classes in dataloader:
-    #         print(f"Batch video shape: {batch_videos.shape}")
-    #         print(f"Batch class IDs: {batch_classes}")
-    #         break
-
-    # except Exception as e:
-    #     print(f"Error during debugging: {str(e)}")
-
     dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
     print(f"Dataset loaded with {len(dataset)} samples.")
 
