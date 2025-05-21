@@ -75,6 +75,7 @@ class SoliDataset(Dataset):
         try:
             with h5py.File(video_path, 'r') as f:
                 for channel in range(self.num_channels):
+                    print(f"num channels: {self.num_channels}")
                     if f"ch{channel}" not in f:
                         raise KeyError(f"Channel {channel} not found in {video_path}.")
                     
@@ -141,7 +142,7 @@ def custom_collate_fn(batch):
     return padded_videos, classes
 
 if __name__ == "__main__":
-    dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
+    dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=4)
     print(f"Dataset loaded with {len(dataset)} samples.")
 
     # Loading a sample to test

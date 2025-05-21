@@ -8,6 +8,7 @@ import glob
 import os
 import matplotlib.pyplot as plt
 from torch.nn.utils.rnn import pad_sequence
+import numpy as np
 
 class VideoTransform(object):
     def __init__(self, resolution=(32, 32)):
@@ -65,29 +66,19 @@ class SoliDataset(Dataset):
 
         with h5py.File(video_path, 'r') as f:
             label = f['label'][()]
-
             data = f['ch{}'.format(use_channel)][()]
             data = data.reshape(-1, self.resolution[0], self.resolution[1])
             tensor_data = torch.from_numpy(data)
             outputs.append(tensor_data)
-            print(f"Data: {tensor_data.shape}")
-
-            # for channel in range(self.num_channels):
-            #     ch_data = f[f'ch{channel}'][:]
-            #     ch_data = ch_data.reshape(-1, self.resolution[0], self.resolution[1])
-            #     tensor_data = torch.from_numpy(ch_data)
-            #     outputs.append(tensor_data)
 
         video = torch.stack(outputs, dim=1).float()
-        print(f"Video shape before transform: {video.shape}")
         video = VideoTransform(self.resolution)(video)
 
-        # class_id = self.class_mapper.transform([class_label])
-        # class_id = torch.tensor(class_id, dtype=torch.long)
         class_id = label[0]
 
         rtm = []
         dtm = []
+        rdtm = []
 
         for t in range(video.size(0)):
             frame = video[t, 0, :, :]
@@ -99,12 +90,16 @@ class SoliDataset(Dataset):
 
             rtm.append(frame[h, :].unsqueeze(1))  
             dtm.append(frame[:, w].unsqueeze(1))  
+
+            rdtm.append(frame[h, :].unsqueeze(1))
+            rdtm.append(frame[:, w].unsqueeze(1))  
             
 
         rtm = torch.cat(rtm, dim=1)
         dtm = torch.cat(dtm, dim=1)
+        rdtm = torch.cat(rdtm, dim=1)
 
-        return video, class_id, rtm, dtm
+        return rtm, class_id, dtm
 
 
 def plot_rtm_dtm(rtm, dtm):
@@ -130,11 +125,78 @@ def plot_rtm_dtm(rtm, dtm):
     plt.tight_layout()
     plt.show()
 
+class DataGenerator:
+    def __init__(self, dataset, batch_size=8, shuffle=True, max_length=100, num_workers=4, drop_last=False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.max_length = max_length
+        self.num_workers = num_workers
+
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            collate_fn=self.custom_collate_fn,
+            num_workers=self.num_workers,
+            drop_last=drop_last
+        )
+
+    def custom_collate_fn(self, batch):
+        rtms, classes, dtms = zip(*batch)
+        rtm_adjusted = []
+        dtm_adjusted = []
+        batch = {}
+
+        for video in rtms:
+            if video.size(1) < self.max_length:
+                padded_video = torch.cat([video, torch.zeros(32, self.max_length - video.size(1))], dim=1)
+                rtm_adjusted.append(padded_video)
+            else:
+                truncated_video = video[:, :self.max_length]
+                rtm_adjusted.append(truncated_video)
+
+        for video in dtms:
+            if video.size(1) < self.max_length:
+                padded_video = torch.cat([video, torch.zeros(32, self.max_length - video.size(1))], dim=1)
+                dtm_adjusted.append(padded_video)
+            else:
+                truncated_video = video[:, :self.max_length]
+                dtm_adjusted.append(truncated_video)
+        
+
+        rtm_tensor = torch.stack(rtm_adjusted)
+        dtm_tensor = torch.stack(dtm_adjusted)
+
+        rdtm_tensor = torch.stack([rtm_tensor, dtm_tensor], dim=1)
+
+        classes_np = np.array(classes)
+
+        # classes_tensor = torch.tensor(classes, dtype=torch.long)
+        classes_tensor = torch.from_numpy(classes_np).long()
+
+        # return rdtm_tensor, classes_tensor
+        batch['rdtm'] = rdtm_tensor
+        batch['class'] = classes_tensor
+
+        return batch
+
+    def get_loader(self):
+        return self.dataloader
+
+
 if __name__ == "__main__":
     dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
-    sample_video, sample_class, rtm, dtm = dataset[11]
+    rtm, sample_class, dtm = dataset[11]
 
-    print(f"Sample video shape: {sample_video.shape}")
+    # print(f"Sample video shape: {sample_video.shape}")
     print(f"Sample class ID: {sample_class}")
 
     plot_rtm_dtm(rtm, dtm)
+
+    # dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=custom_collate_fn)
+    dataloader = DataGenerator(dataset, batch_size=8, shuffle=True, max_length=100).get_loader()
+    for batch_videos, batch_classes in dataloader:
+        print(f"Batch video shape: {batch_videos.shape}")
+        print(f"Batch class IDs: {batch_classes}")
+        break
