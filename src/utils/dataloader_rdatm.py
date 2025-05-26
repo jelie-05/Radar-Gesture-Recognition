@@ -69,6 +69,7 @@ class SoliDataset(Dataset):
             data = f['ch{}'.format(use_channel)][()]
             data = data.reshape(-1, self.resolution[0], self.resolution[1])
             tensor_data = torch.from_numpy(data)
+            # print(f"data shape: {tensor_data.shape}; max: {tensor_data.max()}, min: {tensor_data.min()}")
             outputs.append(tensor_data)
 
         video = torch.stack(outputs, dim=1).float()
@@ -187,7 +188,7 @@ class DataGenerator:
 
 if __name__ == "__main__":
     dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
-    rtm, sample_class, dtm = dataset[11]
+    rtm, sample_class, dtm = dataset[20]
 
     # print(f"Sample video shape: {sample_video.shape}")
     print(f"Sample class ID: {sample_class}")

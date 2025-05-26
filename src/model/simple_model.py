@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torchvision.models as models
 
 class DepthwiseExpansionModule(nn.Module):
     def __init__(self, in_channels, alpha=1):
@@ -57,35 +58,33 @@ class SimpleCNN(nn.Module):
     def __init__(self, in_channels, num_classes):
         super(SimpleCNN, self).__init__()
         out_1 = in_channels*4
-        self.cnn_1 = nn.Conv2d(in_channels, out_1, kernel_size=3, stride=1)
         out_2 = out_1*2
-        self.cnn_2 = nn.Conv2d(out_1, out_2, kernel_size=3, stride=1)
         out_3 = out_2*2
-        self.cnn_3 = nn.Conv2d(out_2, out_3, kernel_size=3, stride=1)
         out_4 = out_3*2
-        self.cnn_4 = nn.Conv2d(out_3, out_4, kernel_size=3, stride=1)
 
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.flatten = nn.Flatten()
-        self.fc = nn.Linear(out_4, out_3)
-        self.fc2 = nn.Linear(out_3, num_classes)
-
-        self.activation = nn.ReLU()
+        self.model = torch.nn.Sequential(
+            nn.Conv2d(in_channels, out_1, kernel_size=3, stride=1),
+            nn.BatchNorm2d(out_1),
+            nn.ReLU(),
+            nn.Conv2d(out_1, out_2, kernel_size=3, stride=1),
+            nn.BatchNorm2d(out_2),
+            nn.ReLU(),
+            nn.Conv2d(out_2, out_3, kernel_size=3, stride=1),
+            nn.BatchNorm2d(out_3),
+            nn.ReLU(),
+            nn.Conv2d(out_3, out_4, kernel_size=3, stride=1),
+            nn.BatchNorm2d(out_4),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(out_4, out_3),
+            nn.Dropout(0.5),
+            nn.Linear(out_3, out_2),
+            nn.Linear(out_2, num_classes)
+        )
 
     def forward(self, x):
-        x = self.cnn_1(x)
-        x = self.activation(x)
-        x = self.cnn_2(x)
-        x = self.activation(x)
-        x = self.cnn_3(x)
-        x = self.activation(x)
-        x = self.cnn_4(x)
-        x = self.activation(x)
-        x = self.avg_pool(x)
-        x = self.flatten(x)
-        x = self.fc(x)
-        x = self.activation(x)
-        x = self.fc2(x)
+        x = self.model(x)
 
         return x    
 
