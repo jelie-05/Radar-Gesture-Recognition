@@ -69,13 +69,13 @@ class SoliDataset(Dataset):
             data = f['ch{}'.format(use_channel)][()]
             data = data.reshape(-1, self.resolution[0], self.resolution[1])
             tensor_data = torch.from_numpy(data)
-            # print(f"data shape: {tensor_data.shape}; max: {tensor_data.max()}, min: {tensor_data.min()}")
             outputs.append(tensor_data)
 
         video = torch.stack(outputs, dim=1).float()
         video = VideoTransform(self.resolution)(video)
 
         class_id = label[0]
+        # print(f"shape of class_id: {class_id.shape}; type: {type(class_id)}")
 
         rtm = []
         dtm = []
@@ -101,6 +101,75 @@ class SoliDataset(Dataset):
         rdtm = torch.cat(rdtm, dim=1)
 
         return rtm, class_id, dtm
+
+
+class NumpyDataset(Dataset):
+    def __init__(self, root_dir='data/recording', classes=None, transform=None):
+        """
+        Args:
+            root_dir (str): Base directory containing subfolders of corresponding classes: 'pull', 'push', 'nothing'
+            classes (list or None): Optional list of class names (subfolder names). If None, autodetects.
+            transform (callable or None): Optional transform to apply to each sample
+        """
+        self.root_dir = root_dir
+        self.transform = transform
+        self.samples = []
+
+        # Detect or use given class names
+        if classes is None:
+            classes = sorted(os.listdir(root_dir))
+        self.class_to_idx = {cls_name: idx for idx, cls_name in enumerate(classes)}
+        self.idx_to_class = {idx: cls_name for cls_name, idx in self.class_to_idx.items()} 
+
+        # Load file paths and labels
+        for cls_name in classes:
+            class_path = os.path.join(root_dir, cls_name)
+            if not os.path.isdir(class_path):
+                continue
+            for fname in os.listdir(class_path):
+                if fname.endswith('.npy'):
+                    full_path = os.path.join(class_path, fname)
+                    self.samples.append((full_path, self.class_to_idx[cls_name]))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        file_path, label = self.samples[idx]
+        data = np.load(file_path).astype(np.float32)  
+        data = torch.from_numpy(data)  
+
+        label = np.array([label], dtype=np.int64)
+        # print(f"npdataset: shape of label: {label.shape}; type: {type(label)}")
+        if self.transform:
+            data = self.transform(data)
+
+        rtm = []
+        dtm = []
+        rdtm = []
+
+        for t in range(data.shape[0]):  
+            frame = data[t, 0, :, :]  
+
+            max_value = frame.max()
+            h, w = (frame == max_value).nonzero(as_tuple=True)
+            h, w = h[0], w[0]
+
+            rtm.append(frame[:, w].unsqueeze(1))    
+            dtm.append(frame[h, :].unsqueeze(1))     
+
+            rdtm.append(frame[:, w].unsqueeze(1))
+            rdtm.append(frame[h, :].unsqueeze(1))
+
+        rtm = torch.cat(rtm, dim=1)  
+        dtm = torch.cat(dtm, dim=1)  
+        rdtm = torch.cat(rdtm, dim=1)
+
+        return rtm, label, dtm
+
+    def get_class_name(self, label):
+        return self.idx_to_class[label] 
+
 
 
 def plot_rtm_dtm(rtm, dtm):

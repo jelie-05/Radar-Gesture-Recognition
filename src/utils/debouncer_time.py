@@ -1,6 +1,6 @@
 
 class DebouncerTime:
-    def __init__(self, detect_threshold=0.6, noise_threshold=0.3, memory_length=101, min_num_detections=3):
+    def __init__(self, detect_threshold=0.6, noise_threshold=0.3, memory_length=30, min_num_detections=3):
 
         self.detect_threshold = detect_threshold
         self.noise_threshold = noise_threshold
@@ -23,10 +23,15 @@ class DebouncerTime:
         h, w = (processed_frame == max_value).nonzero(as_tuple=True)
         h, w = h[0], w[0]
 
-        print(f"Max value in the frame: {max_value}, h: {h}, w: {w}")
+        # print(f"Max value in the frame: {max_value}, h: {h}, w: {w}")
 
-        rtm = processed_frame[h, :].unsqueeze(1)  # Range-Time Map
-        dtm = processed_frame[:, w].unsqueeze(1)
+        # rtm = processed_frame[h, :].unsqueeze(1)  # Range-Time Map
+        # dtm = processed_frame[:, w].unsqueeze(1)
+
+        rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
+        dtm = processed_frame[h, :].unsqueeze(1)
+
+        # print(f"rtm: {rtm.shape}; dtm: {dtm.shape}")
 
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)

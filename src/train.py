@@ -1,12 +1,17 @@
 from model.simple_model import RadarEdgeNetwork, SimpleCNN
 import torch
 import torch.nn as nn
-from utils.dataloader_rdatm import SoliDataset, DataGenerator
+from utils.dataloader_rdatm import SoliDataset, DataGenerator, NumpyDataset
 from torch.utils.data import random_split
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from torchinfo import summary
 from sklearn.metrics import precision_score, recall_score, accuracy_score
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--savename', type=str, required=True, help='Location of training data')
 
 def create_tqdm_bar(iterable, desc):
     return tqdm(enumerate(iterable), total=len(iterable), ncols=150, desc=desc)
@@ -30,25 +35,29 @@ def get_confusion_elements(y_true, y_pred, n_classes):
 
     return TP, FP, TN, FN
 
-def train_model():
-    dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
+def train_model(datadir, num_classes, in_channels, save_name, epochs):
+    # dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
+    dataset = NumpyDataset(root_dir=datadir)
+    
+    generator1 = torch.Generator().manual_seed(1)
+    generator2 = torch.Generator().manual_seed(1)
     train_size = int(0.6*len(dataset))
     val_size = int(0.4*len(dataset))
-    generator1 = torch.Generator().manual_seed(42)
-    generator2 = torch.Generator().manual_seed(42)
     train_dataset, val_dataset = random_split(dataset=dataset, lengths=[train_size, val_size], generator=generator1)
 
-    dataloader_train = DataGenerator(train_dataset, batch_size=64, shuffle=True, max_length=75, num_workers=4, drop_last=True).get_loader()
-    dataloader_val = DataGenerator(val_dataset, batch_size=64, shuffle=True, max_length=75, num_workers=4, drop_last=True).get_loader()
-    
-    writer = SummaryWriter(log_dir='runs/run8')
+    observation_length = 30
 
-    model = SimpleCNN(in_channels=2, num_classes=12)
+    dataloader_train = DataGenerator(train_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
+    dataloader_val = DataGenerator(val_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
+    
+    writer = SummaryWriter(log_dir=f'runs/run_{save_name}')
+
+    model = SimpleCNN(in_channels=in_channels, num_classes=num_classes)
     print(summary(model))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.CrossEntropyLoss()
-    num_epochs = 125
+    num_epochs = epochs
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.train()
@@ -60,12 +69,6 @@ def train_model():
 
         training_loss = 0
         validation_loss = 0
-        precision_train = 0
-        recall_train = 0
-        accuracy_train = 0
-        precision_val = 0
-        recall_val = 0
-        accuracy_val = 0
 
         TP_sum = 0
         FP_sum = 0
@@ -78,7 +81,6 @@ def train_model():
             batch_classes = batch['class']
             batch_videos = batch_videos.to(device)
             batch_classes = batch_classes.to(device).squeeze(1)
-            # print(f"target: {batch_classes}")
 
             optimizer.zero_grad()
             outputs = model(batch_videos)
@@ -91,10 +93,6 @@ def train_model():
 
             target = batch_classes.cpu().numpy()
             pred = idx.cpu().numpy()
-            
-            # precision_train += precision_score(target, pred, average='macro', zero_division=0)
-            # recall_train += recall_score(target, pred, average='macro', zero_division=0)
-            # accuracy_train += accuracy_score(target, pred)
 
             TP, FP, TN, FN = get_confusion_elements(target, pred, n_classes=12)
             TP_sum += TP
@@ -111,10 +109,6 @@ def train_model():
 
         train_loss_epoch = training_loss/len(dataloader_train)
         writer.add_scalar("Loss/train", train_loss_epoch, epoch)
-
-        # train_precision_epoch = precision_train/len(dataloader_train)
-        # train_recall_epoch = recall_train/len(dataloader_train)
-        # train_accuracy_epoch = accuracy_train/len(dataloader_train)
 
         train_precision_epoch = (TP_sum)/(TP_sum+FP_sum)
         train_recall_epoch = TP_sum/(TP_sum+FN_sum)
@@ -179,9 +173,12 @@ def train_model():
             
             if val_loss_epoch < best_loss:
                 best_loss = val_loss_epoch
-                torch.save(model.state_dict(), 'runs/trained_models/radar_edge_network-current_best.pth')
+                torch.save(model.state_dict(), f'runs/trained_models/{save_name}-current_best.pth')
 
     print("Training complete.")
-    torch.save(model.state_dict(), 'runs/trained_models/radar_edge_network.pth')
+    torch.save(model.state_dict(), f'runs/trained_models/{save_name}-last.pth')
 if __name__ == "__main__":
-    train_model()
+    args = parser.parse_args()
+
+    datadir = 'data/recording'
+    train_model( save_name=args.savename)
