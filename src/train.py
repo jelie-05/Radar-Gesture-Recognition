@@ -35,7 +35,7 @@ def get_confusion_elements(y_true, y_pred, n_classes):
 
     return TP, FP, TN, FN
 
-def train_model(datadir, num_classes, in_channels, save_name, epochs):
+def train_model(datadir, num_classes, in_channels, save_name, epochs, observation_length):
     # dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
     dataset = NumpyDataset(root_dir=datadir)
     
@@ -45,7 +45,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs):
     val_size = int(0.4*len(dataset))
     train_dataset, val_dataset = random_split(dataset=dataset, lengths=[train_size, val_size], generator=generator1)
 
-    observation_length = 30
+    observation_length = observation_length
 
     dataloader_train = DataGenerator(train_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
     dataloader_val = DataGenerator(val_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
@@ -177,8 +177,14 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs):
 
     print("Training complete.")
     torch.save(model.state_dict(), f'runs/trained_models/{save_name}-last.pth')
+    
 if __name__ == "__main__":
     args = parser.parse_args()
 
     datadir = 'data/recording'
-    train_model( save_name=args.savename)
+    in_channels = 2
+    num_classes = 4
+    epochs = 50
+    observation_length = 10
+
+    train_model(datadir=datadir, in_channels=in_channels, num_classes=num_classes, epochs=50, save_name=args.savename, observation_length=observation_length)

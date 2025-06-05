@@ -15,6 +15,69 @@ import pandas as pd
 import traceback
 from utils.dataloader_rdatm import NumpyDataset, DataGenerator
 import time
+from DBF import DBF
+import queue
+
+class LivePlot:
+    def __init__(self, max_angle_degrees: float, max_range_m: float, data_queue: queue.Queue):
+        self.h = None
+        self.max_angle_degrees = max_angle_degrees
+        self.max_range_m = max_range_m
+        self.queue = data_queue
+
+        self._fig, self._ax = plt.subplots(nrows=1, ncols=1)
+        self._fig.canvas.manager.set_window_title("Range-Angle-Map using DBF")
+        self._fig.canvas.mpl_connect('close_event', self.close)
+        self._is_window_open = True
+
+        self._fig.subplots_adjust(right=0.8)
+        cbar_ax = self._fig.add_axes([0.85, 0.0, 0.03, 1])
+        self.colorbar_axis = cbar_ax
+
+        # Add animation callback
+        self.anim = FuncAnimation(self._fig, self._update_plot, interval=100)
+
+    def _draw_first_time(self, data: np.ndarray):
+        self.h = self._ax.imshow(
+            data,
+            vmin=-60,
+            vmax=0,
+            cmap='viridis',
+            extent=(-self.max_angle_degrees,
+                    self.max_angle_degrees,
+                    0,
+                    self.max_range_m),
+            origin='lower')
+        self._ax.set_xlabel("angle (degrees)")
+        self._ax.set_ylabel("distance (m)")
+        self._ax.set_aspect("auto")
+
+        self._cbar = self._fig.colorbar(self.h, cax=self.colorbar_axis)
+        self._cbar.ax.set_ylabel("magnitude (a.u.)")
+
+    def _draw_next_time(self, data: np.ndarray):
+        self.h.set_data(data)
+
+    def _update_plot(self, frame):
+        if not self.queue.empty():
+            data, title = self.queue.get_nowait()
+            if self.h is None:
+                self._draw_first_time(data)
+            else:
+                self._draw_next_time(data)
+            self._ax.set_title(title)
+            self._fig.canvas.draw_idle()
+
+    def close(self, event=None):
+        if not self.is_closed():
+            self._is_window_open = False
+            plt.close(self._fig)
+            plt.close('all')
+            print('Application closed!')
+
+    def is_closed(self):
+        return not self._is_window_open
+
 
 class PredictionInference:
     def __init__(self, observation_length, num_classes):
@@ -24,6 +87,30 @@ class PredictionInference:
         self.debouncer = DebouncerTime(memory_length=self.observation_length,)
         self.visualizer = Visualizer(observation_length=self.observation_length, num_classes=num_classes)
         self.prev_rtm_tensor = None
+
+        device = Device()
+        self.num_rx_antennas = device.get_sensor_information()["num_rx_antennas"]
+        rx_mask = (1 << self.num_rx_antennas) - 1
+        
+        self.metric = {
+            'sample_rate_Hz': 2500000,
+            'range_resolution_m': 0.025,
+            'max_range_m': 1,
+            'max_speed_m_s': 3,
+            'speed_resolution_m_s': 0.024,
+            'frame_repetition_time_s': 1 / 9.5,
+            'center_frequency_Hz': 60_750_000_000,
+            'rx_mask': rx_mask,
+            'tx_mask': 1,
+            'tx_power_level': 31,
+            'if_gain_dB': 25,
+        }
+
+        self.num_beams = 27
+        self.max_angle_degrees = 40
+        # self.plot = LivePlot(self.max_angle_degrees, self.metric['max_range_m'])
+        self.ra_queue = queue.Queue()
+        self.plot = LivePlot(self.max_angle_degrees, self.metric['max_range_m'], self.ra_queue)
 
         self.model = SimpleCNN(in_channels=2, num_classes=self.num_classes)
         self.model.eval()
@@ -41,38 +128,60 @@ class PredictionInference:
 
     def run(self):
         with Device() as device:
-            num_rx_antennas = device.get_sensor_information()["num_rx_antennas"]
-            rx_mask = (1 << num_rx_antennas) - 1
-
-            metric = {
-                'sample_rate_Hz': 2500000,
-                'range_resolution_m': 0.025,
-                'max_range_m': 1,
-                'max_speed_m_s': 3,
-                'speed_resolution_m_s': 0.024,
-                'frame_repetition_time_s': 1 / 9.5,
-                'center_frequency_Hz': 60_750_000_000,
-                'rx_mask': rx_mask,
-                'tx_mask': 1,
-                'tx_power_level': 31,
-                'if_gain_dB': 25,
-            }
-
-            cfg = device.metrics_to_config(**metric)
+            cfg = device.metrics_to_config(**self.metric)
             device.set_config(**cfg)
 
-            algo = DopplerAlgo(device.get_config(), num_rx_antennas)
+            algo = DopplerAlgo(device.get_config(), self.num_rx_antennas)
+            dbf = DBF(self.num_rx_antennas, num_beams = self.num_beams, max_angle_degrees =self.max_angle_degrees)
 
             while True:
                 start_loop = time.time()
                 frame_data = device.get_next_frame()
 
                 data_all_antennas = []
-                for i_ant in range(num_rx_antennas):
+                for i_ant in range(self.num_rx_antennas):
                     mat = frame_data[i_ant, :, :]
+
+                    # Doppler Map
                     dfft_dbfs = algo.compute_doppler_map(mat, i_ant)
                     data_all_antennas.append(dfft_dbfs)
 
+                ####################### ANGLE MAP PROCESSING #######################
+                # Rearrange data for DBF
+                data_all_antennas_np = np.stack(data_all_antennas, axis=0)
+                data_all_antennas_np = data_all_antennas_np.transpose(1,2,0)
+
+                num_chirp_per_frame = data_all_antennas_np.shape[1]/2
+                num_samples_per_chirp = data_all_antennas_np.shape[0]
+
+                rd_beam_formed = dbf.run(data_all_antennas_np)
+
+                beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
+                for i_beam in range(self.num_beams):
+                    doppler_i = rd_beam_formed[:,:,i_beam]
+                    beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
+
+                # Maximum energy in Range-Angle map
+                max_energy = np.max(beam_range_energy)
+
+                # Rescale map to better capture the peak The rescaling is done in a
+                # way such that the maximum always has the same value, independent
+                # on the original input peak. A proper peak search can greatly
+                # improve this algorithm.
+                scale = 150
+                beam_range_energy = scale*(beam_range_energy/max_energy - 1)
+
+                # Find dominant angle of target
+                _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
+                angle_degrees = np.linspace(-self.max_angle_degrees, self.max_angle_degrees, self.num_beams)[idx]
+
+                # And plot...
+                # self.plot.draw(beam_range_energy, f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees")
+                self.ra_queue.put((beam_range_energy.copy(), f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees"))
+
+
+                ################# RANGE-DOPPLER MAP PROCESSING #################
+                # Range-Doppler Map
                 range_doppler = do_inference_processing(data_all_antennas)
                 self.debouncer.add_scan(range_doppler)
 
@@ -131,8 +240,6 @@ class Visualizer:
 
         self.rtm_buffer = np.zeros((32, self.prob_history_length))
         self.dtm_buffer = np.zeros((32, self.prob_history_length))
-
-
 
         self.vmin = 0.0
         self.vmax = 0.8
@@ -211,7 +318,6 @@ class Visualizer:
         self.plots[0].set_data(self.rtm_buffer)
         self.plots[1].set_data(self.dtm_buffer)
 
-
 if __name__ == "__main__":
     observation_length = 10
     num_classes = 4
@@ -219,23 +325,24 @@ if __name__ == "__main__":
     inference = PredictionInference(observation_length=observation_length, num_classes=num_classes)
     stop_event = threading.Event()
 
-
-    def run_inference():
+    def run_model_only():
         try:
             inference.run()
         except Exception as e:
             print(f"[Thread] Error: {e}")
-            traceback.print_exc() 
+            traceback.print_exc()
 
-
-    t = threading.Thread(target=run_inference)
+    # Start model-only part in background thread
+    t = threading.Thread(target=run_model_only)
     t.daemon = True
     t.start()
 
     try:
+        # GUI-related functions (including plt.show()) must run in the main thread
         inference.start_gui()
     except KeyboardInterrupt:
         print("\n[Main] KeyboardInterrupt received. Exiting...")
+        
         stop_event.set()
         plt.close('all')
         t.join(timeout=1)
