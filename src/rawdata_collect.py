@@ -23,7 +23,7 @@ class DataRecord:
         self.time_per_frame = 0.1   # how long is one frame in second
         self.num_frames = 600   # total number of recorded frames 
 
-        self.recording_type = 'pull'    # class type
+        self.recording_type = 'nothing'    # class type
 
         self.save_dir = os.path.join(save_dir,f'{self.recording_type}/')
         self.save_metric = os.path.join(save_dir, f'metric/{self.recording_type}/')

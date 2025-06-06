@@ -25,13 +25,16 @@ class AnnotationLoad:
         self.debouncer = DebouncerTime(memory_length=self.observation_length,)
         self.prev_rtm_tensor = None
         
-        self.recording_path = "data/recording/pull/record_pull_0007.npy"  
+        self.gesture_label = 'nothing'
+        self.id = 1
+        self.recording_path = f'data/recording/{self.gesture_label}/record_{self.gesture_label}_{self.id:04d}.npy'
+        
         self.loaded_recording = np.load(self.recording_path)  # shape: [frames, num_ant, height, width]
         self.loaded_frame_idx = 0
 
         self.global_marked_frames = []
         self.recording_name = os.path.basename(self.recording_path)
-        self.gesture_label = 'pull'
+        
 
     def load_next_frame(self):
         if self.loaded_frame_idx >= len(self.loaded_recording):
@@ -45,6 +48,7 @@ class AnnotationLoad:
     def run(self):
         with Device() as device:
             num_rx_antennas = device.get_sensor_information()["num_rx_antennas"]
+
             rx_mask = (1 << num_rx_antennas) - 1
 
             metric = {
@@ -136,7 +140,7 @@ class AnnotationLoad:
         rtm_plot = np.mean(rtm_array, axis=2).T
         dtm_plot = np.mean(dtm_array, axis=2).T
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6))
         extent_rtm = [chunk_start_frame, chunk_end_frame, 0, rtm_plot.shape[0]]
         extent_dtm = [chunk_start_frame, chunk_end_frame, 0, dtm_plot.shape[0]]
 

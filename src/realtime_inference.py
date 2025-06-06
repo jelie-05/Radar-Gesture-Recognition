@@ -70,6 +70,8 @@ class PredictionInference:
                 data_all_antennas = []
                 for i_ant in range(num_rx_antennas):
                     mat = frame_data[i_ant, :, :]
+                    print(f"[RTM] Processing antenna {i_ant} with shape: {mat.shape}")
+                    input("[RTM] Press Enter to continue...")
                     dfft_dbfs = algo.compute_doppler_map(mat, i_ant)
                     data_all_antennas.append(dfft_dbfs)
 

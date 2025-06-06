@@ -1,7 +1,7 @@
 from model.simple_model import RadarEdgeNetwork, SimpleCNN
 import torch
 import torch.nn as nn
-from utils.dataloader_rdatm import SoliDataset, DataGenerator, NumpyDataset
+from utils.dataloader_raw import RadarGestureDataset, DataGenerator
 from torch.utils.data import random_split
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -37,12 +37,19 @@ def get_confusion_elements(y_true, y_pred, n_classes):
 
 def train_model(datadir, num_classes, in_channels, save_name, epochs, observation_length):
     # dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
-    dataset = NumpyDataset(root_dir=datadir)
-    
+    # dataset = NumpyDataset(root_dir=datadir)
+    dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
+    print(f"Total samples in dataset: {len(dataset)}")
+
     generator1 = torch.Generator().manual_seed(1)
-    generator2 = torch.Generator().manual_seed(1)
-    train_size = int(0.6*len(dataset))
-    val_size = int(0.4*len(dataset))
+
+    total_samples = len(dataset)  # e.g., 2123
+    train_ratio = 0.6
+    train_size = int(train_ratio * total_samples)       # e.g., 1273
+    val_size = total_samples - train_size 
+
+    print(f"Train size: {train_size}, Validation size: {val_size}")
+    # Split the dataset into training and validation sets
     train_dataset, val_dataset = random_split(dataset=dataset, lengths=[train_size, val_size], generator=generator1)
 
     observation_length = observation_length
@@ -80,7 +87,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
             batch_videos = batch['rdtm']
             batch_classes = batch['class']
             batch_videos = batch_videos.to(device)
-            batch_classes = batch_classes.to(device).squeeze(1)
+            batch_classes = batch_classes.to(device)
 
             optimizer.zero_grad()
             outputs = model(batch_videos)
@@ -129,8 +136,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
                 batch_videos = batch['rdtm']
                 batch_classes = batch['class']
                 batch_videos = batch_videos.to(device)
-                batch_classes = batch_classes.to(device).squeeze(1)
-
+                batch_classes = batch_classes.to(device)
                 outputs = model(batch_videos)
 
                 loss_val = loss_fn(outputs, batch_classes)
