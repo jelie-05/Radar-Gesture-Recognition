@@ -13,7 +13,7 @@ from model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from utils.dataloader_rdatm import NumpyDataset, DataGenerator
+from utils.dataloader_raw import RadarGestureDataset, DataGenerator
 import time
 from DBF import DBF
 import queue
@@ -123,7 +123,7 @@ class PredictionInference:
             input("[Model] Model file not found. Please ensure the path is correct and the model is trained.")
             self.model = self.model.to('cpu')
 
-        self.dataset = NumpyDataset()
+        self.dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
         self.datagen = DataGenerator(self.dataset, batch_size=1, shuffle=False, max_length=self.observation_length, num_workers=0, drop_last=True)
 
     def run(self):
@@ -192,7 +192,6 @@ class PredictionInference:
                 # rdtm = torch.stack([rtm_tensor, dtm_tensor], dim=1).unsqueeze(0)
                 rdtm = torch.stack([rtm_tensor, dtm_tensor], dim=1).unsqueeze(0)
                 rdtm = rdtm.permute(0, 2, 1, 3)
-                print(f"shape of input rdtm: {rdtm.shape}")
                 
                 prediction = np.zeros((1, self.num_classes))
                 if rdtm.shape[3] >= self.observation_length:
@@ -203,7 +202,6 @@ class PredictionInference:
                     # max index 
                     max_idx = torch.argmax(output, dim=1).item()
                     label = self.dataset.get_class_name(max_idx)
-                    print(f"output shape: {output.shape}, max index: {max_idx}, label: {label}")
                     print(f"[RTM] Detected class: {label} with probability: {prediction.max() * 100:.2f}%")
 
 

@@ -66,8 +66,6 @@ class DBF:
         num_samples, num_chirps, num_antennas = range_doppler.shape
         
         num_antennas_internal, num_beams = self.weights.shape
-
-        print(f"num_antennas_internal: {num_antennas_internal}; num_antennas:{num_antennas}")
         
         assert num_antennas == num_antennas_internal
         

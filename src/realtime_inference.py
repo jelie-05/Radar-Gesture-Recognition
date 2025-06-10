@@ -13,7 +13,9 @@ from model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from utils.dataloader_rdatm import NumpyDataset, DataGenerator
+# from utils.dataloader_rdatm import NumpyDataset, DataGenerator
+from utils.dataloader_raw import RadarGestureDataset, DataGenerator
+
 import time
 
 class PredictionInference:
@@ -27,7 +29,8 @@ class PredictionInference:
 
         self.model = SimpleCNN(in_channels=2, num_classes=self.num_classes)
         self.model.eval()
-        model_path = "runs/trained_models/radar_edge_network.pth"
+        # model_path = "runs/trained_models/radar_edge_network.pth"
+        model_path = 'runs/trained_models/train_0606-last.pth'
         if os.path.exists(model_path):
             self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             print("[Model] Loaded successfully.")
@@ -36,7 +39,8 @@ class PredictionInference:
             input("[Model] Model file not found. Please ensure the path is correct and the model is trained.")
             self.model = self.model.to('cpu')
 
-        self.dataset = NumpyDataset()
+        # self.dataset = NumpyDataset()
+        self.dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
         self.datagen = DataGenerator(self.dataset, batch_size=1, shuffle=False, max_length=self.observation_length, num_workers=0, drop_last=True)
 
     def run(self):
@@ -70,8 +74,6 @@ class PredictionInference:
                 data_all_antennas = []
                 for i_ant in range(num_rx_antennas):
                     mat = frame_data[i_ant, :, :]
-                    print(f"[RTM] Processing antenna {i_ant} with shape: {mat.shape}")
-                    input("[RTM] Press Enter to continue...")
                     dfft_dbfs = algo.compute_doppler_map(mat, i_ant)
                     data_all_antennas.append(dfft_dbfs)
 

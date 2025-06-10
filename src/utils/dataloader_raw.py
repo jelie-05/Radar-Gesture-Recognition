@@ -85,7 +85,10 @@ class RadarGestureDataset(Dataset):
 
     def _build_label_mapping(self):
         gestures = sorted(self.annotation['gesture'].unique())
-        return {g: i for i, g in enumerate(gestures)}
+        self.mapping_idx =  {g: i for i, g in enumerate(gestures)}
+        self.idx_to_class = {v: k for k, v in self.mapping_idx.items()}
+
+        return self.mapping_idx
 
     def __len__(self):
         return len(self.samples)
@@ -130,6 +133,7 @@ class RadarGestureDataset(Dataset):
         dtm, rtm = self.debouncer.get_scans()
     
         return rtm, dtm
+    
 
 def plot_rtm_dtm(rtm, dtm):
     # Define the custom color map (white for max, blue for min)
