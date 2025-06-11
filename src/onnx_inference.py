@@ -93,7 +93,7 @@ class PredictionInference:
                     output = self.interpreter.get_tensor(self.output_details[0]['index'])
                     output = np.array(output)
                     if output.ndim == 1:
-                        output = output[None, :]  # Make sure it's (1, num_classes)
+                        output = output[None, :]  
                     print(f"[DEBUG] output shape BEFORE softmax: {output.shape}")
                     
                     # Apply softmax to the output manually using NumPy
