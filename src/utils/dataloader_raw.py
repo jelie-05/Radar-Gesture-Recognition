@@ -12,7 +12,7 @@ import numpy as np
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),  '..')))
-from doppler import DopplerAlgo
+from utils.doppler import DopplerAlgo
 from AvianRDKWrapper.ifxRadarSDK import *
 from utils.common import do_inference_processing, do_preprocessing
 from utils.debouncer_time import DebouncerTime
@@ -54,9 +54,8 @@ class RadarGestureDataset(Dataset):
         cfg = self.device.metrics_to_config(**metric)
         self.device.set_config(**cfg)
         self.algo = DopplerAlgo(self.device.get_config(), self.num_rx_antennas)
-        self.debouncer = DebouncerTime(memory_length=self.observation_length,)
+        # self.debouncer = DebouncerTime(memory_length=self.observation_length,)
         
-
 
         # Load samples data from .csv files
         self.annotation = pd.read_csv(os.path.join(self.data_root, f'{annotation_csv}.csv'))
@@ -94,6 +93,7 @@ class RadarGestureDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
+        self.debouncer = DebouncerTime(memory_length=self.observation_length,)
         sample = self.samples[idx]
         file_path = sample['file_path']
         start = sample['start_frame']
@@ -104,21 +104,19 @@ class RadarGestureDataset(Dataset):
         frames = data[start : start + self.observation_length]
         frames = torch.from_numpy(frames)
 
-        rtm_list = []
-        dtm_list = []
-
         for i in range(frames.shape[0]):
             rtm, dtm = self.project_to_time(frames[i])
-            rtm_list.append(rtm)
-            dtm_list.append(dtm)
 
         rtm = torch.cat(rtm, dim=1)  
-        dtm = torch.cat(dtm, dim=1)  
+        dtm = torch.cat(dtm, dim=1) 
 
         return rtm, dtm, label
 
     def get_class_name(self, label):
         return self.idx_to_class[label] 
+    
+    def get_mapping(self):
+        return self.idx_to_class
     
     def project_to_time(self, frame):
         data_all_antennas = []

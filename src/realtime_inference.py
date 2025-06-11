@@ -1,6 +1,6 @@
 from internal.fft_spectrum import *
 from AvianRDKWrapper.ifxRadarSDK import *
-from doppler import DopplerAlgo
+from utils.doppler import DopplerAlgo
 from utils.common import do_inference_processing, do_preprocessing
 from utils.debouncer_time import DebouncerTime
 import torch
@@ -13,7 +13,6 @@ from model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-# from utils.dataloader_rdatm import NumpyDataset, DataGenerator
 from utils.dataloader_raw import RadarGestureDataset, DataGenerator
 
 import time
@@ -92,6 +91,7 @@ class PredictionInference:
                 prediction = np.zeros((1, self.num_classes))
                 if rdtm.shape[3] >= self.observation_length:
                     output = self.model(rdtm)  
+                    print(f"shape of output: {output.shape}")
                     output = torch.softmax(output, dim=1)  
                     prediction = output.squeeze(0).cpu().detach().numpy()
 

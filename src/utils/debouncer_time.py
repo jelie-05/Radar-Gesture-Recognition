@@ -23,15 +23,8 @@ class DebouncerTime:
         h, w = (processed_frame == max_value).nonzero(as_tuple=True)
         h, w = h[0], w[0]
 
-        # print(f"Max value in the frame: {max_value}, h: {h}, w: {w}")
-
-        # rtm = processed_frame[h, :].unsqueeze(1)  # Range-Time Map
-        # dtm = processed_frame[:, w].unsqueeze(1)
-
         rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
         dtm = processed_frame[h, :].unsqueeze(1)
-
-        # print(f"rtm: {rtm.shape}; dtm: {dtm.shape}")
 
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)

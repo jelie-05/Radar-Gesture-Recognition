@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torchvision import transforms
-from AvianRDKWrapper.ifxRadarSDK import *
+from src.AvianRDKWrapper.ifxRadarSDK import *
 from sklearn.preprocessing import MinMaxScaler, normalize
 from cv2 import resize, INTER_AREA
 

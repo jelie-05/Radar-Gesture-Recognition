@@ -1,6 +1,6 @@
 from internal.fft_spectrum import *
 from AvianRDKWrapper.ifxRadarSDK import *
-from doppler import DopplerAlgo
+from utils.doppler import DopplerAlgo
 from utils.common import do_inference_processing, do_preprocessing
 from utils.debouncer_time import DebouncerTime
 import torch
@@ -15,7 +15,7 @@ import pandas as pd
 import traceback
 from utils.dataloader_raw import RadarGestureDataset, DataGenerator
 import time
-from DBF import DBF
+from utils.DBF import DBF
 import queue
 
 class LivePlot:

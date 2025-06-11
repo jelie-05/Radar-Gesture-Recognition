@@ -7,7 +7,7 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from torchinfo import summary
 from sklearn.metrics import precision_score, recall_score, accuracy_score
-
+import pickle
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -181,6 +181,10 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
                 best_loss = val_loss_epoch
                 torch.save(model.state_dict(), f'runs/trained_models/{save_name}-current_best.pth')
 
+    with open(f'runs/trained_models/{save_name}-idx_mapping.pkl', 'wb') as f:
+        pickle.dump(dataset.get_mapping(), f)
+
+
     print("Training complete.")
     torch.save(model.state_dict(), f'runs/trained_models/{save_name}-last.pth')
     
@@ -190,7 +194,7 @@ if __name__ == "__main__":
     datadir = 'data/recording'
     in_channels = 2
     num_classes = 4
-    epochs = 50
+    epochs = 1
     observation_length = 10
 
-    train_model(datadir=datadir, in_channels=in_channels, num_classes=num_classes, epochs=50, save_name=args.savename, observation_length=observation_length)
+    train_model(datadir=datadir, in_channels=in_channels, num_classes=num_classes, epochs=epochs, save_name=args.savename, observation_length=observation_length)
