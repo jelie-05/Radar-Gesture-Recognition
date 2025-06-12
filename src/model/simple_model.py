@@ -35,7 +35,7 @@ class RadarEdgeNetwork(nn.Module):
 
         self.conv_layer_2 = nn.Conv2d(out_channel_exp1, filters2, kernel_size=3, stride=1, padding= 1)  #??
         self.depthwise_expansion2 = DepthwiseExpansionModule(filters2, alpha=alpha)
-        out_channel_exp2 = (2*alpha)**3 * filters1
+        out_channel_exp2 = (2*alpha)**3 * filters2
         self.maxpool2d = nn.MaxPool2d(kernel_size=3)   # ??? unknown settings
         self.flatten = nn.Flatten()
         self.fc = nn.Linear(out_channel_exp2*100, num_classes)

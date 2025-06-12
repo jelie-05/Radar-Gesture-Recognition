@@ -109,8 +109,8 @@ class RadarGestureDataset(Dataset):
             rtm_list.append(rtm)
             dtm_list.append(dtm)
 
-        rtm = torch.cat(rtm, dim=1)  
-        dtm = torch.cat(dtm, dim=1)  
+        rtm = torch.cat(rtm_list, dim=1)
+        dtm = torch.cat(dtm_list, dim=1)
 
         return rtm, dtm, label
 
