@@ -14,34 +14,9 @@ def do_preprocessing(range_doppler):
         max = np.max(channel)
         range_doppler[index] = (channel - min) / (max - min)
 
-    # min = np.min(range_doppler)
-    # max = np.max(range_doppler)
-    # normalized = (range_doppler - min) / (max - min)
-    # range_doppler = normalized
-
     range_doppler = np.transpose(range_doppler, (2, 1, 0))
     range_doppler = resize(range_doppler, dsize=(32, 32), interpolation=INTER_AREA)
     range_doppler = np.transpose(range_doppler, (2, 1, 0))
-
-
-    # # Scaling down and normalizing to 0 mean and 1 std
-    # range_doppler = np.array(range_doppler)
-    # range_doppler = np.expand_dims(range_doppler, 0)
-    # tensor = torch.from_numpy(range_doppler).float()
-    # range_doppler = VideoTransform((32, 32))(tensor)
-
-    # Filtering
-    # range_doppler = np.array(range_doppler)
-    # range_doppler = np.where(range_doppler > 0.7, range_doppler, 0.0)
-    # range_doppler = torch.from_numpy(range_doppler).float()
-
-    #
-    # range_doppler = np.array(range_doppler)[0, :, :, :]
-    # range_doppler = [ca_cfar(channel, (4, 4), (8,8 ), 1.5) for channel in range_doppler]
-    # range_doppler = np.array(range_doppler)
-    # range_doppler = np.expand_dims(range_doppler, 0)
-    # tensor = torch.from_numpy(range_doppler).float()
-    # range_doppler = tensor
 
     return range_doppler
 
@@ -51,8 +26,29 @@ def do_inference_processing(range_doppler: np.array):
     range_doppler = torch.from_numpy(range_doppler).float()
     range_doppler = torch.unsqueeze(range_doppler, 0)
 
-
     return range_doppler
+
+def do_processing_RAM(range_angle: np.array):
+    # Normalizing to [0, 1]
+    range_angle = np.abs(range_angle)
+    for index, channel in enumerate(range_angle):
+        min = np.min(channel)
+        max = np.max(channel)
+        range_angle[index] = (channel - min) / (max - min)
+
+    range_angle = np.transpose(range_angle, (1, 0))
+    range_angle = resize(range_angle, dsize=(32, 32), interpolation=INTER_AREA)
+    range_angle = np.transpose(range_angle, (1, 0))
+
+    return range_angle
+
+def do_inference_processing_RAM(range_angle: np.array):
+    # Do inference processing for a range-angle map (RAM)
+    range_angle = do_processing_RAM(range_angle)
+    range_angle = torch.from_numpy(range_angle).float()
+    # range_angle = torch.unsqueeze(range_angle, 0)
+
+    return range_angle
 
 class VideoTransform(object):
     def __init__(self, size):

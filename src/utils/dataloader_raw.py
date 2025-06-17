@@ -19,7 +19,7 @@ from utils.debouncer_time import DebouncerTime
 import pandas as pd
 
 class RadarGestureDataset(Dataset):
-    def __init__(self, root_dir='data/recording', annotation_csv='annotation'):
+    def __init__(self, root_dir='data/recording', annotation_csv='annotation', load_angle=False):
         """
         Args:
             root_dir (str): Base directory containing subfolders of corresponding classes: 'pull', 'push', 'nothing'
@@ -29,7 +29,7 @@ class RadarGestureDataset(Dataset):
         # Configuration for the dataset
         self.observation_length = 10
         self.data_root = root_dir
-
+        self.load_angle = load_angle
 
         # For transformations to time domain
 
@@ -125,10 +125,47 @@ class RadarGestureDataset(Dataset):
             dfft_dbfs = self.algo.compute_doppler_map(mat, i_ant)
             data_all_antennas.append(dfft_dbfs)
 
+        # Range-Doppler-Map
         range_doppler = do_inference_processing(data_all_antennas)
         self.debouncer.add_scan(range_doppler)
-
         dtm, rtm = self.debouncer.get_scans()
+
+        # Range-Angle-Map
+        if self.load_angle:
+            # Rearrange data for DBF
+            data_all_antennas_np = np.stack(data_all_antennas, axis=0)
+            data_all_antennas_np = data_all_antennas_np.transpose(1,2,0)
+
+            num_chirp_per_frame = data_all_antennas_np.shape[1]/2
+            num_samples_per_chirp = data_all_antennas_np.shape[0]
+
+            rd_beam_formed = dbf.run(data_all_antennas_np)
+
+            beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
+            for i_beam in range(self.num_beams):
+                doppler_i = rd_beam_formed[:,:,i_beam]
+                beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
+
+            # Maximum energy in Range-Angle map
+            max_energy = np.max(beam_range_energy)
+
+            # Rescale map to better capture the peak The rescaling is done in a
+            # way such that the maximum always has the same value, independent
+            # on the original input peak. A proper peak search can greatly
+            # improve this algorithm.
+            scale = 150
+            beam_range_energy = scale*(beam_range_energy/max_energy - 1)
+
+            # Find dominant angle of target
+            _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
+            angle_degrees = np.linspace(-self.max_angle_degrees, self.max_angle_degrees, self.num_beams)[idx]
+
+            # And plot...
+            # self.plot.draw(beam_range_energy, f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees")
+            self.ra_queue.put((beam_range_energy.copy(), f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees"))
+
+        else:
+            atm = None
     
         return rtm, dtm
     

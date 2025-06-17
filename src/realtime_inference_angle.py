@@ -1,19 +1,19 @@
-from internal.fft_spectrum import *
-from AvianRDKWrapper.ifxRadarSDK import *
-from utils.doppler import DopplerAlgo
-from utils.common import do_inference_processing, do_preprocessing
-from utils.debouncer_time import DebouncerTime
+from src.internal.fft_spectrum import *
+from src.AvianRDKWrapper.ifxRadarSDK import *
+from src.utils.doppler import DopplerAlgo
+from src.utils.common import do_inference_processing, do_inference_processing_RAM
+from src.utils.debouncer_time import DebouncerTime
 import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.gridspec import GridSpec
 import threading
 import numpy as np
-from model.simple_model import SimpleCNN
+from src.model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
 import time
 from utils.DBF import DBF
 import queue
@@ -106,15 +106,16 @@ class PredictionInference:
             'if_gain_dB': 25,
         }
 
-        self.num_beams = 27
+        # self.num_beams = 27
+        self.num_beams = 32
         self.max_angle_degrees = 40
-        # self.plot = LivePlot(self.max_angle_degrees, self.metric['max_range_m'])
+
         self.ra_queue = queue.Queue()
         self.plot = LivePlot(self.max_angle_degrees, self.metric['max_range_m'], self.ra_queue)
 
         self.model = SimpleCNN(in_channels=2, num_classes=self.num_classes)
         self.model.eval()
-        model_path = "runs/trained_models/radar_edge_network.pth"
+        model_path = "runs/trained_models/train_0613-last.pth"
         if os.path.exists(model_path):
             self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             print("[Model] Loaded successfully.")
@@ -161,13 +162,7 @@ class PredictionInference:
                     doppler_i = rd_beam_formed[:,:,i_beam]
                     beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
 
-                # Maximum energy in Range-Angle map
                 max_energy = np.max(beam_range_energy)
-
-                # Rescale map to better capture the peak The rescaling is done in a
-                # way such that the maximum always has the same value, independent
-                # on the original input peak. A proper peak search can greatly
-                # improve this algorithm.
                 scale = 150
                 beam_range_energy = scale*(beam_range_energy/max_energy - 1)
 
@@ -175,27 +170,28 @@ class PredictionInference:
                 _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
                 angle_degrees = np.linspace(-self.max_angle_degrees, self.max_angle_degrees, self.num_beams)[idx]
 
-                # And plot...
+                # Plot Range-Angle Map
                 # self.plot.draw(beam_range_energy, f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees")
                 self.ra_queue.put((beam_range_energy.copy(), f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees"))
 
+                range_angle = do_inference_processing_RAM(beam_range_energy)
 
                 ################# RANGE-DOPPLER MAP PROCESSING #################
                 # Range-Doppler Map
                 range_doppler = do_inference_processing(data_all_antennas)
-                self.debouncer.add_scan(range_doppler)
+                self.debouncer.add_scan(range_doppler, angle_map=range_angle)
 
-                dtm, rtm = self.debouncer.get_scans()
+                dtm, rtm, atm = self.debouncer.get_scans()   # Only the first channel is used
                 rtm_tensor = torch.stack(rtm, dim=1).float().squeeze(2)
                 dtm_tensor = torch.stack(dtm, dim=1).float().squeeze(2)
+                atm_tensor = torch.stack(atm, dim=1).float().squeeze(2) if atm else None
 
-                # rdtm = torch.stack([rtm_tensor, dtm_tensor], dim=1).unsqueeze(0)
-                rdtm = torch.stack([rtm_tensor, dtm_tensor], dim=1).unsqueeze(0)
-                rdtm = rdtm.permute(0, 2, 1, 3)
+                rdatm = torch.stack([rtm_tensor, dtm_tensor, atm_tensor], dim=1).unsqueeze(0)    # (1, N, 2 or 3, T)
+                rdatm = rdatm.permute(0, 2, 1, 3)
                 
                 prediction = np.zeros((1, self.num_classes))
-                if rdtm.shape[3] >= self.observation_length:
-                    output = self.model(rdtm)  
+                if rdatm.shape[3] >= self.observation_length:
+                    output = self.model(rdatm[:,:2,:,:])  
                     output = torch.softmax(output, dim=1)  
                     prediction = output.squeeze(0).cpu().detach().numpy()
 
@@ -217,8 +213,8 @@ class PredictionInference:
                     print("[RTM] First frame received.")
 
                 self.prev_rtm_tensor = rtm_tensor.clone()
-
-                self.visualizer.add_prediction_step(dtm_tensor.numpy(), rtm_tensor.numpy(), prediction)
+                # TODO: Add ATM to visualizer
+                self.visualizer.add_prediction_step(dtm_tensor.numpy(), rtm_tensor.numpy(), atm_tensor.numpy(), prediction)
 
                 end_loop = time.time()
                 elapsed_time = end_loop-start_loop
@@ -238,6 +234,7 @@ class Visualizer:
 
         self.rtm_buffer = np.zeros((32, self.prob_history_length))
         self.dtm_buffer = np.zeros((32, self.prob_history_length))
+        self.atm_buffer = np.zeros((32, self.prob_history_length))
 
         self.vmin = 0.0
         self.vmax = 0.8
@@ -255,7 +252,8 @@ class Visualizer:
         plt.show()
 
     def prepare_range_doppler_subplots(self):
-        gs = GridSpec(nrows=2, ncols=1, hspace=0.5)
+        gs = GridSpec(nrows=3, ncols=1, hspace=0.5)
+
 
         ax_range = self.fig.add_subplot(gs[0, 0])
         ax_range.set_title('Range over Time')
@@ -274,8 +272,16 @@ class Visualizer:
         self.fig.colorbar(img2, ax=ax_velocity, orientation='vertical', label='Intensity')
         yield img2
 
+        ax_angle = self.fig.add_subplot(gs[2, 0])
+        ax_angle.set_title('Angle over Time')
+        ax_angle.set_xlabel('Time (frames)')
+        ax_angle.set_ylabel('Angle (°)')
+        img3 = ax_angle.imshow(np.zeros((32, self.prob_history_length)), aspect='auto', origin='lower', vmin=0.0, vmax=1.25)
+        self.fig.colorbar(img3, ax=ax_angle, orientation='vertical', label='Intensity')
+        yield img3
+
     def prepare_prediction_subplots(self):
-        gs = GridSpec(nrows=6, ncols=2, hspace=0.5)
+        gs = GridSpec(nrows=3, ncols=1, hspace=0.5)
 
         for idx in range(self.num_classes):
             ax = self.fig2.add_subplot(gs[idx // 2, idx % 2])
@@ -292,7 +298,8 @@ class Visualizer:
             if len(column_data) > 0:
                 self.plots2[index].set_data(range(len(column_data)), column_data.values)
 
-    def add_prediction_step(self, dtm, rtm, prediction):
+    def add_prediction_step(self, dtm, rtm, atm, prediction):
+
         if len(self.pred_history) >= self.prob_history_length:
             self.pred_history = self.pred_history.iloc[1:]
 
@@ -302,11 +309,15 @@ class Visualizer:
         if rtm.shape[1] != 100:
             self.rtm_buffer = np.roll(self.rtm_buffer, -1, axis=1)
             self.dtm_buffer = np.roll(self.dtm_buffer, -1, axis=1)
+            self.atm_buffer = np.roll(self.atm_buffer, -1, axis=1)
+
             self.rtm_buffer[:, -1] = rtm[:, -1]
             self.dtm_buffer[:, -1] = dtm[:, -1]
+            self.atm_buffer[:, -1] = atm[:, -1]
         else:
             self.rtm_buffer = rtm
             self.dtm_buffer = dtm
+            self.atm_buffer = atm
 
     def visualize_data(self, frame):
         if self.rtm_buffer is None or self.dtm_buffer is None:
@@ -315,6 +326,8 @@ class Visualizer:
         scale_v = 2
         self.plots[0].set_data(self.rtm_buffer)
         self.plots[1].set_data(self.dtm_buffer)
+        self.plots[2].set_data(self.atm_buffer)
+
 
 if __name__ == "__main__":
     observation_length = 10

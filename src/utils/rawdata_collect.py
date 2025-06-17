@@ -1,15 +1,15 @@
-from internal.fft_spectrum import *
-from AvianRDKWrapper.ifxRadarSDK import *
-from utils.doppler import DopplerAlgo
-from utils.common import do_inference_processing, do_preprocessing
-from utils.debouncer_time import DebouncerTime
+from src.internal.fft_spectrum import *
+from src.AvianRDKWrapper.ifxRadarSDK import *
+from src.utils.doppler import DopplerAlgo
+from src.utils.common import do_inference_processing, do_preprocessing
+from src.utils.debouncer_time import DebouncerTime
 import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.gridspec import GridSpec
 import threading
 import numpy as np
-from model.simple_model import SimpleCNN
+from src.model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
@@ -21,9 +21,9 @@ class DataRecord:
         self.prev_rtm_tensor = None
 
         self.time_per_frame = 0.1   # how long is one frame in second
-        self.num_frames = 600   # total number of recorded frames 
+        self.num_frames = 700   # total number of recorded frames 
 
-        self.recording_type = 'nothing'    # class type
+        self.recording_type = 'push'    # class type
 
         self.save_dir = os.path.join(save_dir,f'{self.recording_type}/')
         self.save_metric = os.path.join(save_dir, f'metric/{self.recording_type}/')

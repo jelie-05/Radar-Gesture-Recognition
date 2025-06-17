@@ -1,4 +1,3 @@
-
 class DebouncerTime:
     def __init__(self, detect_threshold=0.6, noise_threshold=0.3, memory_length=30, min_num_detections=3):
 
@@ -9,12 +8,17 @@ class DebouncerTime:
 
         self.dtm_memory = []
         self.rtm_memory = []
+        self.atm_memory = []  # Angle-Time Map
+
         self.detection_memory = []
 
-    def add_scan(self, frame):
+    def add_scan(self, frame, angle_map=None):
         if len(self.dtm_memory) >= self.memory_length:
             self.dtm_memory.pop(0)
             self.rtm_memory.pop(0)
+
+            if angle_map is not None:
+                self.atm_memory.pop(0)
 
         # Only add the first channel !!!
         processed_frame = frame[0, 0, :, :]
@@ -29,5 +33,12 @@ class DebouncerTime:
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
 
+        if angle_map is not None:
+            atm = angle_map[h,:].unsqueeze(1)  # Angle-Time Map
+            self.atm_memory.append(atm)
+
     def get_scans(self):
-        return self.dtm_memory, self.rtm_memory
+        if self.atm_memory:
+            return self.dtm_memory, self.rtm_memory, self.atm_memory
+        else:
+            return self.dtm_memory, self.rtm_memory

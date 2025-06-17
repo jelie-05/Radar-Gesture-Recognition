@@ -1,5 +1,5 @@
 import torch
-from model.simple_model import SimpleCNN
+from src.model.simple_model import SimpleCNN
 import os
 from onnx_tf.backend import prepare
 import onnx
@@ -8,7 +8,8 @@ import numpy as np
 
 # === 1. Load the PyTorch model ===
 model = SimpleCNN(in_channels=2, num_classes=4)
-model_path = 'runs/trained_models/train_0606-last.pth'
+date = '0613'
+model_path = f'runs/trained_models/train_{date}-last.pth'
 
 if os.path.exists(model_path):
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
@@ -22,7 +23,7 @@ model.eval()
 
 # === 2. Export to ONNX ===
 dummy_input = torch.randn(1, 2, 32, 10)
-onnx_path = "gesture_recognition_model.onnx"
+onnx_path = f'runs/trained_models/train_{date}.onnx'
 
 torch.onnx.export(
     model,
@@ -48,7 +49,7 @@ print(f"[TF] SavedModel exported to {saved_model_dir}")
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
 tflite_model = converter.convert()
 
-tflite_path = "runs/trained_models/my_custom_model.tflite"
+tflite_path = f'runs/trained_models/train_{date}.tflite'
 with open(tflite_path, "wb") as f:
     f.write(tflite_model)
 print(f"[TFLite] Model saved to {tflite_path}")

@@ -81,7 +81,6 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
         FP_sum = 0
         TN_sum = 0
         FN_sum = 0
-        
 
         for train_iter, batch in train_loop:
             batch_videos = batch['rdtm']

@@ -1,18 +1,14 @@
-from internal.fft_spectrum import *
-from AvianRDKWrapper.ifxRadarSDK import *
-from utils.doppler import DopplerAlgo
-from utils.common import do_inference_processing, do_preprocessing
-from utils.debouncer_time import DebouncerTime
-import torch
+from src.internal.fft_spectrum import *
+from src.AvianRDKWrapper.ifxRadarSDK import *
+from src.utils.doppler import DopplerAlgo
+from src.utils.common import do_inference_processing, do_preprocessing
+from src.utils.debouncer_time import DebouncerTime
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.gridspec import GridSpec
-import threading
 import numpy as np
 import os
 import pandas as pd
-import traceback
-import time
 import tkinter as tk
 
 class AnnotationLoad:
@@ -24,7 +20,8 @@ class AnnotationLoad:
         self.prev_rtm_tensor = None
         
         self.gesture_label = 'nothing'
-        self.id = 1
+        self.id = 13
+
         self.recording_path = f'data/recording/{self.gesture_label}/record_{self.gesture_label}_{self.id:04d}.npy'
         
         self.loaded_recording = np.load(self.recording_path)  # shape: [frames, num_ant, height, width]
