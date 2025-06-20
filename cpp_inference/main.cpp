@@ -31,13 +31,6 @@ int main() {
     int device_id = dev.device_id;
     Module gmod = (*Registry::Get("tvm.graph_executor.create"))(graph_json, mod, device_type, device_id);
 
-    // // ================== [DEBUG] ==================
-    // if (!gmod.defined()) { std::cerr << "ERROR: gmod is not defined\n"; return -1; }
-    // if (!gmod.GetFunction("load_params").defined()) { std::cerr << "ERROR: load_params missing\n"; return -1; }
-    // if (!gmod.GetFunction("set_input").defined()) { std::cerr << "ERROR: set_input missing\n"; return -1; }
-    // if (!gmod.GetFunction("run").defined()) { std::cerr << "ERROR: run missing\n"; return -1; }
-    // if (!gmod.GetFunction("get_output").defined()) { std::cerr << "ERROR: get_output missing\n"; return -1; }
-
     // Load parameters .params
     std::ifstream params_in("tvm_params.params", std::ios::binary);
     std::string param_data((std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
@@ -51,17 +44,21 @@ int main() {
     std::vector<int64_t> input_shape = {1, 32, 10, 2};
     NDArray input_arr = NDArray::Empty(input_shape, {kDLFloat, 32, 1}, dev);
     float* input_ptr = static_cast<float*>(input_arr->data);
+
+    // Random input data
     for (int i = 0; i < 1 * 32 * 10 * 2; ++i) {
         input_ptr[i] = static_cast<float>(rand()) / RAND_MAX;  // Random dummy input
     }
-
-    // std::cout << "[INFO] Input shape: [1, 32, 10, 2]\n";
-    // std::cout << "[INFO] Set input: serving_default_input:0\n";
+    // Sinusoidal input data
+    // for (int i = 0; i < 1 * 32 * 10 * 2; ++i) {
+    //     float val = std::sin(i * 0.1f);        // range: [-1, 1]
+    //     input_ptr[i] = (val + 1.0f) / 2.0f;     // normalized to [0, 1]
+    // }
 
     gmod.GetFunction("set_input")("serving_default_input:0", input_arr);
 
     // Run inference
-    // std::cout << "[INFO] Running inference...\n";
+    std::cout << "[INFO] Running inference...\n";
     gmod.GetFunction("run")();
 
     // Get output
