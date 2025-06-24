@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/infer.dir/main.cpp.o -o infer   -L/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/../tvm/build  -Wl,-rpath,/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/../tvm/build -ltvm_runtime
