@@ -11,14 +11,14 @@
 #include <cmath>
 #include <cstring>
 
-#include "../data/samples/class0_input.h"
-#include "../data/samples/class0_softmax.h"
-#include "../data/samples/class1_input.h"
-#include "../data/samples/class1_softmax.h"
-#include "../data/samples/class2_input.h"
-#include "../data/samples/class2_softmax.h"
-#include "../data/samples/class3_input.h"
-#include "../data/samples/class3_softmax.h"
+#include <data/samples/class0_input.h>
+#include <data/samples/class0_softmax.h>
+#include <data/samples/class1_input.h>
+#include <data/samples/class1_softmax.h>
+#include <data/samples/class2_input.h>
+#include <data/samples/class2_softmax.h>
+#include <data/samples/class3_input.h>
+#include <data/samples/class3_softmax.h>
 
 using namespace tvm::runtime;
 
@@ -30,10 +30,10 @@ struct Sample {
 
 int main() {
     // Load TVM module
-    Module mod = Module::LoadFromFile("/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/tvm_model.so");
+    Module mod = Module::LoadFromFile("../tvm_model.so");
 
     // Load graph
-    std::ifstream graph_json_file("graph.json");
+    std::ifstream graph_json_file("../graph.json");
     std::string graph_json((std::istreambuf_iterator<char>(graph_json_file)), std::istreambuf_iterator<char>());
 
     // Set device
@@ -43,7 +43,7 @@ int main() {
     Module gmod = (*Registry::Get("tvm.graph_executor.create"))(graph_json, mod, static_cast<int>(dev.device_type), dev.device_id);
 
     // Load parameters
-    std::ifstream params_in("tvm_params.params", std::ios::binary);
+    std::ifstream params_in("../tvm_params.params", std::ios::binary);
     std::string param_data((std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
     TVMByteArray param_arr{param_data.data(), param_data.size()};
     gmod.GetFunction("load_params")(param_arr);
