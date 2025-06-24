@@ -1,0 +1,9 @@
+[submodule "chrome-dinosaur"]
+	path = chrome-dinosaur
+	url = https://github.com/MaxRohowsky/chrome-dinosaur.git
+[submodule "pydino"]
+	path = pydino
+	url = https://github.com/MaxRohowsky/chrome-dinosaur.git
+[submodule "tvm"]
+	path = tvm
+	url = https://github.com/apache/tvm.git
