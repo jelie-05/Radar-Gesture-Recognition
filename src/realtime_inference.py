@@ -1,19 +1,19 @@
-from internal.fft_spectrum import *
-from AvianRDKWrapper.ifxRadarSDK import *
-from utils.doppler import DopplerAlgo
-from utils.common import do_inference_processing, do_preprocessing
-from utils.debouncer_time import DebouncerTime
+from src.internal.fft_spectrum import *
+from src.AvianRDKWrapper.ifxRadarSDK import *
+from src.utils.doppler import DopplerAlgo
+from src.utils.common import do_inference_processing, do_preprocessing
+from src.utils.debouncer_time import DebouncerTime
 import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.gridspec import GridSpec
 import threading
 import numpy as np
-from model.simple_model import SimpleCNN
+from src.model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
 
 import time
 

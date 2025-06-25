@@ -148,7 +148,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=tvm_cpp_inference
+CMAKE_PROJECT_NAME:STATIC=tvm_runtime_only
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -216,13 +216,13 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Value Computed by CMake
-tvm_cpp_inference_BINARY_DIR:STATIC=/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/build
+tvm_runtime_only_BINARY_DIR:STATIC=/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/build
 
 //Value Computed by CMake
-tvm_cpp_inference_IS_TOP_LEVEL:STATIC=ON
+tvm_runtime_only_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
-tvm_cpp_inference_SOURCE_DIR:STATIC=/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference
+tvm_runtime_only_SOURCE_DIR:STATIC=/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference
 
 
 ########################

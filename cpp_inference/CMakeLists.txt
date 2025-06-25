@@ -1,22 +1,47 @@
-cmake_minimum_required(VERSION 3.10)
-project(tvm_cpp_inference)
+# Minimal CMakeLists.txt for standalone TVM Runtime build
+cmake_minimum_required(VERSION 3.13)
+project(tvm_runtime_only C CXX)
 
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
-# set(TVM_HOME ${CMAKE_SOURCE_DIR}/../tvm)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# # Include TVM headers
-# include_directories(${TVM_HOME}/include)
-# include_directories(${TVM_HOME}/3rdparty/dmlc-core/include)
-# include_directories(${TVM_HOME}/3rdparty/dlpack/include)
+# Include TVM CMake utilities
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils")
+include(Utils)
+include(Summary)
+include(Linker)
 
-# Link to TVM runtime
-# link_directories(${TVM_HOME}/build)
+# Load config
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake")
+    include("${CMAKE_CURRENT_SOURCE_DIR}/config.cmake")
+endif()
 
-# Source file
-add_executable(infer main.cpp)
+# Set visibility and logging macros (minimal)
+add_definitions(-DTVM_RUNTIME_EXPORT_RUNTIME=1 -DDMLC_LOG_CUSTOMIZE=1)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
-# Link with TVM runtime
-# target_link_libraries(infer tvm_runtime)
+# Include paths
+include_directories(include)  
+include_directories(third_party/tvm)  # Runtime headers
+include_directories(3rdparty/dmlc-core/include)
+include_directories(3rdparty/dlpack/include)
 
-# Add include directory for manually copied sample headers
-include_directories(${CMAKE_SOURCE_DIR}/include)
+# Source files (minimal runtime subset)
+file(GLOB RUNTIME_SRCS
+    third_party/tvm/runtime/c_runtime_api.cc
+    third_party/tvm/runtime/registry.cc
+    third_party/tvm/runtime/module.cc
+    third_party/tvm/runtime/ndarray.cc
+    third_party/tvm/runtime/object.cc
+    third_party/tvm/runtime/logging.cc
+    third_party/tvm/runtime/source_utils.cc  
+    third_party/tvm/runtime/library_module.cc
+)
+
+# Runtime static library
+add_library(tvm_runtime STATIC ${RUNTIME_SRCS})
+
+# # Build main inference binary
+# add_executable(run_model main.cpp)
+# target_link_libraries(run_model PRIVATE tvm_runtime)

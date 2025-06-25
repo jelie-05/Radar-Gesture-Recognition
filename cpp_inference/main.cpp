@@ -1,3 +1,8 @@
+#define DMLC_LOG_CUSTOMIZE 1
+#define DMLC_USE_CXX11 1
+// #define DMLC_USE_LOGGING_LIBRARY 1
+
+
 #include <tvm/runtime/module.h>
 #include <tvm/runtime/registry.h>
 #include <tvm/runtime/packed_func.h>
