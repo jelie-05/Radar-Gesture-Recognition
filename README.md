@@ -1,5 +1,5 @@
 # Radar-Gesture-Recognition
-
+![PyDino Game](https://github.com/user-attachments/assets/b689bdab-9586-4f93-a01f-4e100f59c87e)
 ## Content
 
 ## Radar Gesture Recognition
@@ -11,6 +11,7 @@ This project demonstrates gesture recognition using the `Infineon BGT60TR13C FMC
 The main input is a **Range-Doppler map**, which is projected into the time domain to capture temporal features. This projection enables efficient temporal learning while reducing input dimensionality. An additional range-angle map projection has also been implemented, but it currently introduces latency and affects real-time performance.
 
 ---
+
 
 ### Dataset Generation
 
