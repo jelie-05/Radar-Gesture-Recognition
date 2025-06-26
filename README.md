@@ -52,3 +52,69 @@ To train the model on annotated radar data, run:
 
 ```bash
 python src/train.py
+```
+This script loads the preprocessed dataset, trains the CNN on gesture classes, and saves the resulting model for inference.
+
+**Inference**
+
+To run real-time inference with radar input and visualize outputs:
+```bash
+python src/realtime_inference.py
+```
+This script handles live radar input and displays both the Range-Time Map (RTM) and Doppler-Time Map (DTM) in real time. It also performs live classification and outputs the predicted gesture.
+
+---
+
+## Deployment on TPU
+
+The trained PyTorch model is converted to ONNX or TFLite format, and then compiled using [Apache TVM](https://github.com/apache/tvm) for deployment on a custom TPU board. The final runtime model is executed using the C++ runtime located in the `cpp_inference/` directory.
+
+---
+
+### Converting Trained Model to Runtime
+
+To convert the PyTorch model to ONNX or TFLite format, run:
+
+```bash
+python src/utils/runtime_convert.py
+```
+This creates an intermediate format suitable for further optimization.
+
+---
+
+### TVM Compilation
+We use **TVM v0.13.0** for compiling the model due to its flexibility in targeting multiple hardware platforms. Instead of converting from ONNX, we use TFLite as the input format to TVM for faster deployment after the conversion.
+
+To compile the model using TVM, run:
+```bash
+python src/utils/tvm_transform.py
+```
+You can configure the output format by setting the compile_to argument:
+
+- `so`: produces a device-specific shared object (.so) compiled model (C/C++ runtime).
+
+- `c`: produces a tar archive containing C source code, which can be compiled later for any target (not device-specific).
+
+---
+
+### C++ Deployment
+
+To compile the C++ runtime for the TVM-generated model, navigate to the `build/` directory and run the following:
+
+```bash
+cd cpp_inference/build
+rm -rf *
+cmake ..
+make
+```
+
+Depending on the output format from TVM (.so or C source), run the corresponding executable:
+- If TVM output is a shared object (.so):
+```bash
+./run_so
+```
+- If TVM output is C source code (.c in tar archive):
+```bash
+./run_c
+```
+Make sure the compiled artifacts and tvm_model.so or C-generated source are correctly placed in the build directory before running. They should be in `cpp_inference/`.
