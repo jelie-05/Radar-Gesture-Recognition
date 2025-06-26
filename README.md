@@ -1,6 +1,17 @@
 # Radar-Gesture-Recognition
 ![PyDino Game](https://github.com/user-attachments/assets/b689bdab-9586-4f93-a01f-4e100f59c87e)
+
 ## Content
+- [Radar Gesture Recognition](#radar-gesture-recognition)
+  - [Background](#background)
+  - [Dataset Generation](#dataset-generation)
+    - [Data Collection](#data-collection)
+    - [Annotation](#annotation)
+  - [Train & Inference](#train--inference)
+- [Deployment on TPU](#deployment-on-tpu)
+  - [Converting Trained Model to Runtime](#converting-trained-model-to-runtime)
+  - [TVM Compilation](#tvm-compilation)
+  - [C++ Deployment](#c-deployment)
 
 ## Radar Gesture Recognition
 
