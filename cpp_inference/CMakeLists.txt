@@ -67,14 +67,23 @@ add_custom_command(TARGET tvm_runtime POST_BUILD
 )
 
 # === Executable ===
-add_executable(run_model main.cpp)
+add_executable(run_so main_so.cpp)
 
 # Link with forced whole-archive around the actual .a file
-target_link_options(run_model PRIVATE
+target_link_options(run_so PRIVATE
     "-Wl,--whole-archive"
     "${CMAKE_BINARY_DIR}/libtvm_runtime.a"
     "-Wl,--no-whole-archive"
 )
 
 # Link additional system libs
-target_link_libraries(run_model PRIVATE pthread m)
+target_link_libraries(run_so PRIVATE pthread m)
+
+# === C Code Generation ===
+file(GLOB MODEL_MICRO_SRCS "model-micro/codegen/host/src/*.c")
+
+add_executable(run_c main_c.cpp ${MODEL_MICRO_SRCS})
+target_include_directories(run_c PRIVATE
+    model-micro/codegen/host/include
+    ${PROJECT_SOURCE_DIR}/include
+)

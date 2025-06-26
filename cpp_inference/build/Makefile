@@ -156,41 +156,126 @@ tvm_runtime/fast:
 .PHONY : tvm_runtime/fast
 
 #=============================================================================
-# Target rules for targets named run_model
+# Target rules for targets named run_so
 
 # Build rule for target.
-run_model: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run_model
-.PHONY : run_model
+run_so: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run_so
+.PHONY : run_so
 
 # fast build rule for target.
-run_model/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/build
-.PHONY : run_model/fast
+run_so/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_so.dir/build.make CMakeFiles/run_so.dir/build
+.PHONY : run_so/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+#=============================================================================
+# Target rules for targets named run_c
+
+# Build rule for target.
+run_c: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run_c
+.PHONY : run_c
+
+# fast build rule for target.
+run_c/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/build
+.PHONY : run_c/fast
+
+main_c.o: main_c.cpp.o
+.PHONY : main_c.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.o
-.PHONY : main.cpp.o
+main_c.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/main_c.cpp.o
+.PHONY : main_c.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+main_c.i: main_c.cpp.i
+.PHONY : main_c.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.i
-.PHONY : main.cpp.i
+main_c.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/main_c.cpp.i
+.PHONY : main_c.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+main_c.s: main_c.cpp.s
+.PHONY : main_c.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.s
-.PHONY : main.cpp.s
+main_c.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/main_c.cpp.s
+.PHONY : main_c.cpp.s
+
+main_so.o: main_so.cpp.o
+.PHONY : main_so.o
+
+# target to build an object file
+main_so.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_so.dir/build.make CMakeFiles/run_so.dir/main_so.cpp.o
+.PHONY : main_so.cpp.o
+
+main_so.i: main_so.cpp.i
+.PHONY : main_so.i
+
+# target to preprocess a source file
+main_so.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_so.dir/build.make CMakeFiles/run_so.dir/main_so.cpp.i
+.PHONY : main_so.cpp.i
+
+main_so.s: main_so.cpp.s
+.PHONY : main_so.s
+
+# target to generate assembly for a file
+main_so.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_so.dir/build.make CMakeFiles/run_so.dir/main_so.cpp.s
+.PHONY : main_so.cpp.s
+
+model-micro/codegen/host/src/default_lib0.o: model-micro/codegen/host/src/default_lib0.c.o
+.PHONY : model-micro/codegen/host/src/default_lib0.o
+
+# target to build an object file
+model-micro/codegen/host/src/default_lib0.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib0.c.o
+.PHONY : model-micro/codegen/host/src/default_lib0.c.o
+
+model-micro/codegen/host/src/default_lib0.i: model-micro/codegen/host/src/default_lib0.c.i
+.PHONY : model-micro/codegen/host/src/default_lib0.i
+
+# target to preprocess a source file
+model-micro/codegen/host/src/default_lib0.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib0.c.i
+.PHONY : model-micro/codegen/host/src/default_lib0.c.i
+
+model-micro/codegen/host/src/default_lib0.s: model-micro/codegen/host/src/default_lib0.c.s
+.PHONY : model-micro/codegen/host/src/default_lib0.s
+
+# target to generate assembly for a file
+model-micro/codegen/host/src/default_lib0.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib0.c.s
+.PHONY : model-micro/codegen/host/src/default_lib0.c.s
+
+model-micro/codegen/host/src/default_lib1.o: model-micro/codegen/host/src/default_lib1.c.o
+.PHONY : model-micro/codegen/host/src/default_lib1.o
+
+# target to build an object file
+model-micro/codegen/host/src/default_lib1.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib1.c.o
+.PHONY : model-micro/codegen/host/src/default_lib1.c.o
+
+model-micro/codegen/host/src/default_lib1.i: model-micro/codegen/host/src/default_lib1.c.i
+.PHONY : model-micro/codegen/host/src/default_lib1.i
+
+# target to preprocess a source file
+model-micro/codegen/host/src/default_lib1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib1.c.i
+.PHONY : model-micro/codegen/host/src/default_lib1.c.i
+
+model-micro/codegen/host/src/default_lib1.s: model-micro/codegen/host/src/default_lib1.c.s
+.PHONY : model-micro/codegen/host/src/default_lib1.s
+
+# target to generate assembly for a file
+model-micro/codegen/host/src/default_lib1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_c.dir/build.make CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib1.c.s
+.PHONY : model-micro/codegen/host/src/default_lib1.c.s
 
 third_party/tvm/runtime/c_runtime_api.o: third_party/tvm/runtime/c_runtime_api.cc.o
 .PHONY : third_party/tvm/runtime/c_runtime_api.o
@@ -584,13 +669,23 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... run_model"
+	@echo "... run_c"
+	@echo "... run_so"
 	@echo "... tvm_runtime"
 	@echo "... tvm_runtime_dso_loader_obj"
 	@echo "... tvm_runtime_obj"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... main_c.o"
+	@echo "... main_c.i"
+	@echo "... main_c.s"
+	@echo "... main_so.o"
+	@echo "... main_so.i"
+	@echo "... main_so.s"
+	@echo "... model-micro/codegen/host/src/default_lib0.o"
+	@echo "... model-micro/codegen/host/src/default_lib0.i"
+	@echo "... model-micro/codegen/host/src/default_lib0.s"
+	@echo "... model-micro/codegen/host/src/default_lib1.o"
+	@echo "... model-micro/codegen/host/src/default_lib1.i"
+	@echo "... model-micro/codegen/host/src/default_lib1.s"
 	@echo "... third_party/tvm/runtime/c_runtime_api.o"
 	@echo "... third_party/tvm/runtime/c_runtime_api.i"
 	@echo "... third_party/tvm/runtime/c_runtime_api.s"

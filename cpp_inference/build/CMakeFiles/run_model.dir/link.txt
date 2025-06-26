@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--whole-archive /home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/build/libtvm_runtime.a -Wl,--no-whole-archive CMakeFiles/run_model.dir/main.cpp.o -o run_model  -lpthread -lm
