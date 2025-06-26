@@ -8,10 +8,11 @@
 
 This project demonstrates gesture recognition using the `Infineon BGT60TR13C FMCW radar`, implemented for a custom TPU board. It focuses on simple gestures such as **up**, **down**, and **hold**, which are used to control a PyGame Dino game in real time. The goal is to showcase real-time embedded inference with minimal latency.
 
+![Radar](https://github.com/user-attachments/assets/d3199fe0-19bf-438e-93f2-f562a4b02f17)
+
 The main input is a **Range-Doppler map**, which is projected into the time domain to capture temporal features. This projection enables efficient temporal learning while reducing input dimensionality. An additional range-angle map projection has also been implemented, but it currently introduces latency and affects real-time performance.
 
 ---
-
 
 ### Dataset Generation
 
