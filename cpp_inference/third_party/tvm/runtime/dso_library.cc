@@ -34,6 +34,8 @@
 #include <dlfcn.h>
 #endif
 
+#include <tvm/runtime/c_runtime_api.h>
+
 #if defined(__hexagon__)
 extern "C" {
 #include <HAP_farf.h>
@@ -155,3 +157,17 @@ TVM_REGISTER_GLOBAL("runtime.module.loadfile_so").set_body([](TVMArgs args, TVMR
 });
 }  // namespace runtime
 }  // namespace tvm
+
+namespace tvm {
+namespace runtime {
+
+void InitDSORegistry() {
+  // This will force the static initializer of dso_library.cc to run
+  auto f = Registry::Get("runtime.module.loadfile_so");
+  if (f == nullptr) {
+    throw std::runtime_error("Failed to force registration of DSO loader");
+  }
+}
+
+}
+}

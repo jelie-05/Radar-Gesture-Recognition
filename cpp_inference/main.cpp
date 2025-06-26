@@ -8,6 +8,9 @@
 #include <tvm/runtime/packed_func.h>
 #include <tvm/runtime/ndarray.h>
 
+#include <graph_executor/graph_executor_factory.h>
+#include <tvm/runtime/threading_backend.h> 
+
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -33,7 +36,31 @@ struct Sample {
     const char* label;
 };
 
+namespace tvm {
+namespace runtime {
+void InitDSORegistry();  // You will implement this
+}
+}
+
 int main() {
+    if (!tvm::runtime::Registry::Get("runtime.module.loadbinary_GraphExecutorFactory")) {
+        std::cerr << "[ERROR] GraphExecutorFactory loader not registered!\n";
+    } else {
+        std::cout << "[INFO] GraphExecutorFactory loader is registered.\n";
+    }
+
+    // volatile auto* __force_so_loader = tvm::runtime::Registry::Get("runtime.module.loadfile_so");
+    tvm::runtime::InitDSORegistry();
+
+    // DEBUG: Check if the loader is registered
+    if (!Registry::Get("runtime.module.loadfile_so")) {
+        std::cerr << "[ERROR] runtime.module.loadfile_so not registered!\n";
+    } else {
+        std::cout << "[INFO] runtime.module.loadfile_so is registered!\n";
+    }
+
+    
+
     // Load TVM module
     Module mod = Module::LoadFromFile("../tvm_model.so");
 
