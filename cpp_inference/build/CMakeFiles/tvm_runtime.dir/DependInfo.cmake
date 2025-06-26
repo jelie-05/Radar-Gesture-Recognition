@@ -8,14 +8,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/c_runtime_api.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/c_runtime_api.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/c_runtime_api.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/library_module.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/library_module.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/library_module.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/logging.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/logging.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/logging.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/module.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/module.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/module.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/ndarray.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/ndarray.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/ndarray.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/object.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/object.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/object.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/registry.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/registry.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/registry.cc.o.d"
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/source_utils.cc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/source_utils.cc.o" "gcc" "CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/source_utils.cc.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

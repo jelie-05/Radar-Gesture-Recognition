@@ -117,6 +117,32 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named tvm_runtime_obj
+
+# Build rule for target.
+tvm_runtime_obj: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tvm_runtime_obj
+.PHONY : tvm_runtime_obj
+
+# fast build rule for target.
+tvm_runtime_obj/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/build
+.PHONY : tvm_runtime_obj/fast
+
+#=============================================================================
+# Target rules for targets named tvm_runtime_dso_loader_obj
+
+# Build rule for target.
+tvm_runtime_dso_loader_obj: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tvm_runtime_dso_loader_obj
+.PHONY : tvm_runtime_dso_loader_obj
+
+# fast build rule for target.
+tvm_runtime_dso_loader_obj/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_dso_loader_obj.dir/build.make CMakeFiles/tvm_runtime_dso_loader_obj.dir/build
+.PHONY : tvm_runtime_dso_loader_obj/fast
+
+#=============================================================================
 # Target rules for targets named tvm_runtime
 
 # Build rule for target.
@@ -129,12 +155,49 @@ tvm_runtime/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/build
 .PHONY : tvm_runtime/fast
 
+#=============================================================================
+# Target rules for targets named run_model
+
+# Build rule for target.
+run_model: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run_model
+.PHONY : run_model
+
+# fast build rule for target.
+run_model/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/build
+.PHONY : run_model/fast
+
+main.o: main.cpp.o
+.PHONY : main.o
+
+# target to build an object file
+main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.o
+.PHONY : main.cpp.o
+
+main.i: main.cpp.i
+.PHONY : main.i
+
+# target to preprocess a source file
+main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.i
+.PHONY : main.cpp.i
+
+main.s: main.cpp.s
+.PHONY : main.s
+
+# target to generate assembly for a file
+main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_model.dir/build.make CMakeFiles/run_model.dir/main.cpp.s
+.PHONY : main.cpp.s
+
 third_party/tvm/runtime/c_runtime_api.o: third_party/tvm/runtime/c_runtime_api.cc.o
 .PHONY : third_party/tvm/runtime/c_runtime_api.o
 
 # target to build an object file
 third_party/tvm/runtime/c_runtime_api.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/c_runtime_api.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/c_runtime_api.cc.o
 .PHONY : third_party/tvm/runtime/c_runtime_api.cc.o
 
 third_party/tvm/runtime/c_runtime_api.i: third_party/tvm/runtime/c_runtime_api.cc.i
@@ -142,7 +205,7 @@ third_party/tvm/runtime/c_runtime_api.i: third_party/tvm/runtime/c_runtime_api.c
 
 # target to preprocess a source file
 third_party/tvm/runtime/c_runtime_api.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/c_runtime_api.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/c_runtime_api.cc.i
 .PHONY : third_party/tvm/runtime/c_runtime_api.cc.i
 
 third_party/tvm/runtime/c_runtime_api.s: third_party/tvm/runtime/c_runtime_api.cc.s
@@ -150,15 +213,135 @@ third_party/tvm/runtime/c_runtime_api.s: third_party/tvm/runtime/c_runtime_api.c
 
 # target to generate assembly for a file
 third_party/tvm/runtime/c_runtime_api.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/c_runtime_api.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/c_runtime_api.cc.s
 .PHONY : third_party/tvm/runtime/c_runtime_api.cc.s
+
+third_party/tvm/runtime/cpu_device_api.o: third_party/tvm/runtime/cpu_device_api.cc.o
+.PHONY : third_party/tvm/runtime/cpu_device_api.o
+
+# target to build an object file
+third_party/tvm/runtime/cpu_device_api.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/cpu_device_api.cc.o
+.PHONY : third_party/tvm/runtime/cpu_device_api.cc.o
+
+third_party/tvm/runtime/cpu_device_api.i: third_party/tvm/runtime/cpu_device_api.cc.i
+.PHONY : third_party/tvm/runtime/cpu_device_api.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/cpu_device_api.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/cpu_device_api.cc.i
+.PHONY : third_party/tvm/runtime/cpu_device_api.cc.i
+
+third_party/tvm/runtime/cpu_device_api.s: third_party/tvm/runtime/cpu_device_api.cc.s
+.PHONY : third_party/tvm/runtime/cpu_device_api.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/cpu_device_api.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/cpu_device_api.cc.s
+.PHONY : third_party/tvm/runtime/cpu_device_api.cc.s
+
+third_party/tvm/runtime/dso_library.o: third_party/tvm/runtime/dso_library.cc.o
+.PHONY : third_party/tvm/runtime/dso_library.o
+
+# target to build an object file
+third_party/tvm/runtime/dso_library.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_dso_loader_obj.dir/build.make CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.o
+.PHONY : third_party/tvm/runtime/dso_library.cc.o
+
+third_party/tvm/runtime/dso_library.i: third_party/tvm/runtime/dso_library.cc.i
+.PHONY : third_party/tvm/runtime/dso_library.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/dso_library.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_dso_loader_obj.dir/build.make CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.i
+.PHONY : third_party/tvm/runtime/dso_library.cc.i
+
+third_party/tvm/runtime/dso_library.s: third_party/tvm/runtime/dso_library.cc.s
+.PHONY : third_party/tvm/runtime/dso_library.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/dso_library.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_dso_loader_obj.dir/build.make CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.s
+.PHONY : third_party/tvm/runtime/dso_library.cc.s
+
+third_party/tvm/runtime/file_utils.o: third_party/tvm/runtime/file_utils.cc.o
+.PHONY : third_party/tvm/runtime/file_utils.o
+
+# target to build an object file
+third_party/tvm/runtime/file_utils.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/file_utils.cc.o
+.PHONY : third_party/tvm/runtime/file_utils.cc.o
+
+third_party/tvm/runtime/file_utils.i: third_party/tvm/runtime/file_utils.cc.i
+.PHONY : third_party/tvm/runtime/file_utils.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/file_utils.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/file_utils.cc.i
+.PHONY : third_party/tvm/runtime/file_utils.cc.i
+
+third_party/tvm/runtime/file_utils.s: third_party/tvm/runtime/file_utils.cc.s
+.PHONY : third_party/tvm/runtime/file_utils.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/file_utils.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/file_utils.cc.s
+.PHONY : third_party/tvm/runtime/file_utils.cc.s
+
+third_party/tvm/runtime/graph_executor/graph_executor.o: third_party/tvm/runtime/graph_executor/graph_executor.cc.o
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.o
+
+# target to build an object file
+third_party/tvm/runtime/graph_executor/graph_executor.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor.cc.o
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.cc.o
+
+third_party/tvm/runtime/graph_executor/graph_executor.i: third_party/tvm/runtime/graph_executor/graph_executor.cc.i
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/graph_executor/graph_executor.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor.cc.i
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.cc.i
+
+third_party/tvm/runtime/graph_executor/graph_executor.s: third_party/tvm/runtime/graph_executor/graph_executor.cc.s
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/graph_executor/graph_executor.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor.cc.s
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor.cc.s
+
+third_party/tvm/runtime/graph_executor/graph_executor_factory.o: third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.o
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.o
+
+# target to build an object file
+third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.o
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.o
+
+third_party/tvm/runtime/graph_executor/graph_executor_factory.i: third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.i
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.i
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.i
+
+third_party/tvm/runtime/graph_executor/graph_executor_factory.s: third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.s
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.s
+.PHONY : third_party/tvm/runtime/graph_executor/graph_executor_factory.cc.s
 
 third_party/tvm/runtime/library_module.o: third_party/tvm/runtime/library_module.cc.o
 .PHONY : third_party/tvm/runtime/library_module.o
 
 # target to build an object file
 third_party/tvm/runtime/library_module.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/library_module.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/library_module.cc.o
 .PHONY : third_party/tvm/runtime/library_module.cc.o
 
 third_party/tvm/runtime/library_module.i: third_party/tvm/runtime/library_module.cc.i
@@ -166,7 +349,7 @@ third_party/tvm/runtime/library_module.i: third_party/tvm/runtime/library_module
 
 # target to preprocess a source file
 third_party/tvm/runtime/library_module.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/library_module.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/library_module.cc.i
 .PHONY : third_party/tvm/runtime/library_module.cc.i
 
 third_party/tvm/runtime/library_module.s: third_party/tvm/runtime/library_module.cc.s
@@ -174,7 +357,7 @@ third_party/tvm/runtime/library_module.s: third_party/tvm/runtime/library_module
 
 # target to generate assembly for a file
 third_party/tvm/runtime/library_module.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/library_module.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/library_module.cc.s
 .PHONY : third_party/tvm/runtime/library_module.cc.s
 
 third_party/tvm/runtime/logging.o: third_party/tvm/runtime/logging.cc.o
@@ -182,7 +365,7 @@ third_party/tvm/runtime/logging.o: third_party/tvm/runtime/logging.cc.o
 
 # target to build an object file
 third_party/tvm/runtime/logging.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/logging.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/logging.cc.o
 .PHONY : third_party/tvm/runtime/logging.cc.o
 
 third_party/tvm/runtime/logging.i: third_party/tvm/runtime/logging.cc.i
@@ -190,7 +373,7 @@ third_party/tvm/runtime/logging.i: third_party/tvm/runtime/logging.cc.i
 
 # target to preprocess a source file
 third_party/tvm/runtime/logging.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/logging.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/logging.cc.i
 .PHONY : third_party/tvm/runtime/logging.cc.i
 
 third_party/tvm/runtime/logging.s: third_party/tvm/runtime/logging.cc.s
@@ -198,7 +381,7 @@ third_party/tvm/runtime/logging.s: third_party/tvm/runtime/logging.cc.s
 
 # target to generate assembly for a file
 third_party/tvm/runtime/logging.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/logging.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/logging.cc.s
 .PHONY : third_party/tvm/runtime/logging.cc.s
 
 third_party/tvm/runtime/module.o: third_party/tvm/runtime/module.cc.o
@@ -206,7 +389,7 @@ third_party/tvm/runtime/module.o: third_party/tvm/runtime/module.cc.o
 
 # target to build an object file
 third_party/tvm/runtime/module.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/module.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/module.cc.o
 .PHONY : third_party/tvm/runtime/module.cc.o
 
 third_party/tvm/runtime/module.i: third_party/tvm/runtime/module.cc.i
@@ -214,7 +397,7 @@ third_party/tvm/runtime/module.i: third_party/tvm/runtime/module.cc.i
 
 # target to preprocess a source file
 third_party/tvm/runtime/module.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/module.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/module.cc.i
 .PHONY : third_party/tvm/runtime/module.cc.i
 
 third_party/tvm/runtime/module.s: third_party/tvm/runtime/module.cc.s
@@ -222,7 +405,7 @@ third_party/tvm/runtime/module.s: third_party/tvm/runtime/module.cc.s
 
 # target to generate assembly for a file
 third_party/tvm/runtime/module.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/module.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/module.cc.s
 .PHONY : third_party/tvm/runtime/module.cc.s
 
 third_party/tvm/runtime/ndarray.o: third_party/tvm/runtime/ndarray.cc.o
@@ -230,7 +413,7 @@ third_party/tvm/runtime/ndarray.o: third_party/tvm/runtime/ndarray.cc.o
 
 # target to build an object file
 third_party/tvm/runtime/ndarray.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/ndarray.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/ndarray.cc.o
 .PHONY : third_party/tvm/runtime/ndarray.cc.o
 
 third_party/tvm/runtime/ndarray.i: third_party/tvm/runtime/ndarray.cc.i
@@ -238,7 +421,7 @@ third_party/tvm/runtime/ndarray.i: third_party/tvm/runtime/ndarray.cc.i
 
 # target to preprocess a source file
 third_party/tvm/runtime/ndarray.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/ndarray.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/ndarray.cc.i
 .PHONY : third_party/tvm/runtime/ndarray.cc.i
 
 third_party/tvm/runtime/ndarray.s: third_party/tvm/runtime/ndarray.cc.s
@@ -246,7 +429,7 @@ third_party/tvm/runtime/ndarray.s: third_party/tvm/runtime/ndarray.cc.s
 
 # target to generate assembly for a file
 third_party/tvm/runtime/ndarray.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/ndarray.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/ndarray.cc.s
 .PHONY : third_party/tvm/runtime/ndarray.cc.s
 
 third_party/tvm/runtime/object.o: third_party/tvm/runtime/object.cc.o
@@ -254,7 +437,7 @@ third_party/tvm/runtime/object.o: third_party/tvm/runtime/object.cc.o
 
 # target to build an object file
 third_party/tvm/runtime/object.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/object.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/object.cc.o
 .PHONY : third_party/tvm/runtime/object.cc.o
 
 third_party/tvm/runtime/object.i: third_party/tvm/runtime/object.cc.i
@@ -262,7 +445,7 @@ third_party/tvm/runtime/object.i: third_party/tvm/runtime/object.cc.i
 
 # target to preprocess a source file
 third_party/tvm/runtime/object.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/object.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/object.cc.i
 .PHONY : third_party/tvm/runtime/object.cc.i
 
 third_party/tvm/runtime/object.s: third_party/tvm/runtime/object.cc.s
@@ -270,7 +453,7 @@ third_party/tvm/runtime/object.s: third_party/tvm/runtime/object.cc.s
 
 # target to generate assembly for a file
 third_party/tvm/runtime/object.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/object.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/object.cc.s
 .PHONY : third_party/tvm/runtime/object.cc.s
 
 third_party/tvm/runtime/registry.o: third_party/tvm/runtime/registry.cc.o
@@ -278,7 +461,7 @@ third_party/tvm/runtime/registry.o: third_party/tvm/runtime/registry.cc.o
 
 # target to build an object file
 third_party/tvm/runtime/registry.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/registry.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/registry.cc.o
 .PHONY : third_party/tvm/runtime/registry.cc.o
 
 third_party/tvm/runtime/registry.i: third_party/tvm/runtime/registry.cc.i
@@ -286,7 +469,7 @@ third_party/tvm/runtime/registry.i: third_party/tvm/runtime/registry.cc.i
 
 # target to preprocess a source file
 third_party/tvm/runtime/registry.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/registry.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/registry.cc.i
 .PHONY : third_party/tvm/runtime/registry.cc.i
 
 third_party/tvm/runtime/registry.s: third_party/tvm/runtime/registry.cc.s
@@ -294,7 +477,7 @@ third_party/tvm/runtime/registry.s: third_party/tvm/runtime/registry.cc.s
 
 # target to generate assembly for a file
 third_party/tvm/runtime/registry.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/registry.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/registry.cc.s
 .PHONY : third_party/tvm/runtime/registry.cc.s
 
 third_party/tvm/runtime/source_utils.o: third_party/tvm/runtime/source_utils.cc.o
@@ -302,7 +485,7 @@ third_party/tvm/runtime/source_utils.o: third_party/tvm/runtime/source_utils.cc.
 
 # target to build an object file
 third_party/tvm/runtime/source_utils.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/source_utils.cc.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/source_utils.cc.o
 .PHONY : third_party/tvm/runtime/source_utils.cc.o
 
 third_party/tvm/runtime/source_utils.i: third_party/tvm/runtime/source_utils.cc.i
@@ -310,7 +493,7 @@ third_party/tvm/runtime/source_utils.i: third_party/tvm/runtime/source_utils.cc.
 
 # target to preprocess a source file
 third_party/tvm/runtime/source_utils.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/source_utils.cc.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/source_utils.cc.i
 .PHONY : third_party/tvm/runtime/source_utils.cc.i
 
 third_party/tvm/runtime/source_utils.s: third_party/tvm/runtime/source_utils.cc.s
@@ -318,8 +501,80 @@ third_party/tvm/runtime/source_utils.s: third_party/tvm/runtime/source_utils.cc.
 
 # target to generate assembly for a file
 third_party/tvm/runtime/source_utils.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime.dir/build.make CMakeFiles/tvm_runtime.dir/third_party/tvm/runtime/source_utils.cc.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/source_utils.cc.s
 .PHONY : third_party/tvm/runtime/source_utils.cc.s
+
+third_party/tvm/runtime/thread_pool.o: third_party/tvm/runtime/thread_pool.cc.o
+.PHONY : third_party/tvm/runtime/thread_pool.o
+
+# target to build an object file
+third_party/tvm/runtime/thread_pool.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/thread_pool.cc.o
+.PHONY : third_party/tvm/runtime/thread_pool.cc.o
+
+third_party/tvm/runtime/thread_pool.i: third_party/tvm/runtime/thread_pool.cc.i
+.PHONY : third_party/tvm/runtime/thread_pool.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/thread_pool.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/thread_pool.cc.i
+.PHONY : third_party/tvm/runtime/thread_pool.cc.i
+
+third_party/tvm/runtime/thread_pool.s: third_party/tvm/runtime/thread_pool.cc.s
+.PHONY : third_party/tvm/runtime/thread_pool.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/thread_pool.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/thread_pool.cc.s
+.PHONY : third_party/tvm/runtime/thread_pool.cc.s
+
+third_party/tvm/runtime/threading_backend.o: third_party/tvm/runtime/threading_backend.cc.o
+.PHONY : third_party/tvm/runtime/threading_backend.o
+
+# target to build an object file
+third_party/tvm/runtime/threading_backend.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/threading_backend.cc.o
+.PHONY : third_party/tvm/runtime/threading_backend.cc.o
+
+third_party/tvm/runtime/threading_backend.i: third_party/tvm/runtime/threading_backend.cc.i
+.PHONY : third_party/tvm/runtime/threading_backend.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/threading_backend.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/threading_backend.cc.i
+.PHONY : third_party/tvm/runtime/threading_backend.cc.i
+
+third_party/tvm/runtime/threading_backend.s: third_party/tvm/runtime/threading_backend.cc.s
+.PHONY : third_party/tvm/runtime/threading_backend.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/threading_backend.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/threading_backend.cc.s
+.PHONY : third_party/tvm/runtime/threading_backend.cc.s
+
+third_party/tvm/runtime/workspace_pool.o: third_party/tvm/runtime/workspace_pool.cc.o
+.PHONY : third_party/tvm/runtime/workspace_pool.o
+
+# target to build an object file
+third_party/tvm/runtime/workspace_pool.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/workspace_pool.cc.o
+.PHONY : third_party/tvm/runtime/workspace_pool.cc.o
+
+third_party/tvm/runtime/workspace_pool.i: third_party/tvm/runtime/workspace_pool.cc.i
+.PHONY : third_party/tvm/runtime/workspace_pool.i
+
+# target to preprocess a source file
+third_party/tvm/runtime/workspace_pool.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/workspace_pool.cc.i
+.PHONY : third_party/tvm/runtime/workspace_pool.cc.i
+
+third_party/tvm/runtime/workspace_pool.s: third_party/tvm/runtime/workspace_pool.cc.s
+.PHONY : third_party/tvm/runtime/workspace_pool.s
+
+# target to generate assembly for a file
+third_party/tvm/runtime/workspace_pool.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tvm_runtime_obj.dir/build.make CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/workspace_pool.cc.s
+.PHONY : third_party/tvm/runtime/workspace_pool.cc.s
 
 # Help Target
 help:
@@ -329,10 +584,31 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... run_model"
 	@echo "... tvm_runtime"
+	@echo "... tvm_runtime_dso_loader_obj"
+	@echo "... tvm_runtime_obj"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
 	@echo "... third_party/tvm/runtime/c_runtime_api.o"
 	@echo "... third_party/tvm/runtime/c_runtime_api.i"
 	@echo "... third_party/tvm/runtime/c_runtime_api.s"
+	@echo "... third_party/tvm/runtime/cpu_device_api.o"
+	@echo "... third_party/tvm/runtime/cpu_device_api.i"
+	@echo "... third_party/tvm/runtime/cpu_device_api.s"
+	@echo "... third_party/tvm/runtime/dso_library.o"
+	@echo "... third_party/tvm/runtime/dso_library.i"
+	@echo "... third_party/tvm/runtime/dso_library.s"
+	@echo "... third_party/tvm/runtime/file_utils.o"
+	@echo "... third_party/tvm/runtime/file_utils.i"
+	@echo "... third_party/tvm/runtime/file_utils.s"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor.o"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor.i"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor.s"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor_factory.o"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor_factory.i"
+	@echo "... third_party/tvm/runtime/graph_executor/graph_executor_factory.s"
 	@echo "... third_party/tvm/runtime/library_module.o"
 	@echo "... third_party/tvm/runtime/library_module.i"
 	@echo "... third_party/tvm/runtime/library_module.s"
@@ -354,6 +630,15 @@ help:
 	@echo "... third_party/tvm/runtime/source_utils.o"
 	@echo "... third_party/tvm/runtime/source_utils.i"
 	@echo "... third_party/tvm/runtime/source_utils.s"
+	@echo "... third_party/tvm/runtime/thread_pool.o"
+	@echo "... third_party/tvm/runtime/thread_pool.i"
+	@echo "... third_party/tvm/runtime/thread_pool.s"
+	@echo "... third_party/tvm/runtime/threading_backend.o"
+	@echo "... third_party/tvm/runtime/threading_backend.i"
+	@echo "... third_party/tvm/runtime/threading_backend.s"
+	@echo "... third_party/tvm/runtime/workspace_pool.o"
+	@echo "... third_party/tvm/runtime/workspace_pool.i"
+	@echo "... third_party/tvm/runtime/workspace_pool.s"
 .PHONY : help
 
 

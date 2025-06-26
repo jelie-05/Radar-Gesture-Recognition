@@ -144,5 +144,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
+  "CMakeFiles/tvm_runtime_obj.dir/DependInfo.cmake"
+  "CMakeFiles/tvm_runtime_dso_loader_obj.dir/DependInfo.cmake"
   "CMakeFiles/tvm_runtime.dir/DependInfo.cmake"
+  "CMakeFiles/run_model.dir/DependInfo.cmake"
   )
