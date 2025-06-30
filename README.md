@@ -106,6 +106,8 @@ You can configure the output format by setting the compile_to argument:
 
 - `c`: produces a tar archive containing C source code, which can be compiled later for any target (not device-specific).
 
+The resulting .so file or .tar file (extracted) should be placed in `cpp_inference/`.
+
 ---
 
 ### C++ Deployment

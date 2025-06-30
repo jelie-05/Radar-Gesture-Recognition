@@ -11,6 +11,7 @@ import os
 
 
 def load_tflite_model(model_path: str):
+    print(f"Loading TFLite model from {model_path}")
     with open(model_path, "rb") as f:
         model_buf = f.read()
     return Model.GetRootAsModel(model_buf, 0)
@@ -55,6 +56,8 @@ def compile_model(mod, params, target="llvm", compile_to="so"):
 
 def save_artifacts(lib, output_prefix="tvm", compile_to="so"):
     if compile_to == "so":
+        # cross = cc.cross_compiler("aarch64-poky-linux-g++")
+        # lib.export_library(f"{output_prefix}_model.so", fcompile=cross)
         lib.export_library(f"{output_prefix}_model.so")
 
         with open(f"{output_prefix}_params.params", "wb") as f:
