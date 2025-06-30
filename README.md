@@ -33,8 +33,11 @@ The main input is a **Range-Doppler map**, which is projected into the time doma
 
 To collect gesture data, run the following script:
 
-```bash
+<!-- ```bash
 python src/utils/rawdata_collect.py
+``` -->
+```bash
+python -m src.utils.rawdata_collect
 ```
 Before starting the recording, set the appropriate parameters in the script: `
 - `self.recording_type`: specify the target gesture class (e.g., 'push', 'pull', 'hold', 'nothing')
@@ -47,8 +50,11 @@ Gestures can be performed repeatedly during a single recording session. The raw 
 **Annotation**
 
 To annotate the recorded data, use the annotation tool:
-```bash
+<!-- ```bash
 python src/utils/annotation.py
+``` -->
+```bash
+python -m src.utils.annotation
 ```
 This script allows you to label and automatically store individual gesture segments in the collected recordings as CSV file. The annotation consists of `file_name`, `gesture`, `start_frame` defining where the gesture starts, and number of samples in the recording.
 
@@ -61,16 +67,22 @@ A simple CNN model is used to allow efficient deployment on the custom TPU board
 **Training**  
 To train the model on annotated radar data, run:
 
-```bash
+<!-- ```bash
 python src/train.py
+``` -->
+```bash
+python -m src.train
 ```
 This script loads the preprocessed dataset, trains the CNN on gesture classes, and saves the resulting model for inference.
 
 **Inference**
 
 To run real-time inference with radar input and visualize outputs:
-```bash
+<!-- ```bash
 python src/realtime_inference.py
+``` -->
+```bash
+python -m src.realtime_inference
 ```
 This script handles live radar input and displays both the Range-Time Map (RTM) and Doppler-Time Map (DTM) in real time. It also performs live classification and outputs the predicted gesture.
 
@@ -86,8 +98,11 @@ The trained PyTorch model is converted to ONNX or TFLite format, and then compil
 
 To convert the PyTorch model to ONNX or TFLite format, run:
 
-```bash
+<!-- ```bash
 python src/utils/runtime_convert.py
+``` -->
+```bash
+python -m src.utils.runtime_convert
 ```
 This creates an intermediate format suitable for further optimization.
 
@@ -97,8 +112,11 @@ This creates an intermediate format suitable for further optimization.
 We use **TVM v0.13.0** for compiling the model due to its flexibility in targeting multiple hardware platforms. Instead of converting from ONNX, we use TFLite as the input format to TVM for faster deployment after the conversion.
 
 To compile the model using TVM, run:
-```bash
+<!-- ```bash
 python src/utils/tvm_transform.py
+``` -->
+```bash
+python -m src.utils.tvm_transform
 ```
 You can configure the output format by setting the compile_to argument:
 
