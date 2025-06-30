@@ -65,7 +65,7 @@ This script allows you to label and automatically store individual gesture segme
 A simple CNN model is used to allow efficient deployment on the custom TPU board.
 
 **Training**  
-To train the model on annotated radar data, run:
+To train the model on annotated radar data, run from the root:
 
 <!-- ```bash
 python src/train.py
