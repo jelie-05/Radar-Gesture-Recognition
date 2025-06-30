@@ -133,8 +133,9 @@ The resulting .so file or .tar file (extracted) should be placed in `cpp_inferen
 To compile the C++ runtime for the TVM-generated model, navigate to the `build/` directory and run the following:
 
 ```bash
-cd cpp_inference/build
-rm -rf *
+cd cpp_inference
+mkdir build
+cd build
 cmake ..
 make
 ```
