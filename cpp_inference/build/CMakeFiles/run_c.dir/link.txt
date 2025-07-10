@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/run_c.dir/main_c.cpp.o CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib0.c.o CMakeFiles/run_c.dir/model-micro/codegen/host/src/default_lib1.c.o -o run_c 
