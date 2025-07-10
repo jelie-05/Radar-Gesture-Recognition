@@ -54,6 +54,7 @@ bool recv_all(int sock, uint8_t* buffer, size_t size) {
 }
 
 int main() {
+    // // Setting up the listener
     int server_fd, client_fd;
     sockaddr_in address{};
     socklen_t addrlen = sizeof(address);
@@ -89,6 +90,7 @@ int main() {
     }
     std::cout << "[Receiver] Connected to client.\n";
 
+    // // Initializing for prediction
     // === Allocate input/output buffers ===
     float input_data[1 * 2 * 32 * 10];  // shape: [1, 2, 32, 10]
     float output_data[1 * 4];          // shape: [1, 4]
@@ -134,27 +136,10 @@ int main() {
             std::cout << std::fixed << std::setprecision(5) << output_data[i] << " ";
         }
         std::cout << "\n";
-
-        // // Softmax
-        // float sum_exp = 0.0f;
-        // std::vector<float> probs(4);
-        // for (int i = 0; i < 4; ++i) {
-        //     probs[i] = std::exp(output_data[i]);
-        //     sum_exp += probs[i];
-        // }
-        // for (int i = 0; i < 4; ++i) {
-        //     probs[i] /= sum_exp;
-        // }
-
-        // std::cout << "Softmax Output vs Expected:\n";
-        // for (int i = 0; i < 4; ++i) {
-        //     std::cout << "Output[" << i << "] = " << std::fixed << std::setprecision(5)
-        //               << probs[i] << "\n";
-        // }
         
         // // Exporting the output to a file via TCP
         // Define server details (original device IP & port)
-        const char* SERVER_IP = "192.168.1.123"; 
+        const char* SERVER_IP = "192.168.1.1"; // Raspi IP
         const int SERVER_PORT = 5006;  
 
         // Create socket
@@ -164,7 +149,7 @@ int main() {
             return 1;
         }
 
-        // 2. Prepare server address struct
+        // Prepare server address struct
         sockaddr_in serv_addr;
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(SERVER_PORT);
@@ -173,13 +158,13 @@ int main() {
             return 1;
         }
 
-        // 3. Connect to server (Python listener)
+        // Connect to server (Python listener)
         if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
             perror("Connection Failed");
             return 1;
         }
 
-        // 4. Send data length first
+        // Send data length first
         uint32_t data_len = sizeof(output_data); // Number of bytes in the float array
         uint32_t data_len_n = htonl(data_len);
         send(sock, &data_len_n, sizeof(data_len_n), 0);

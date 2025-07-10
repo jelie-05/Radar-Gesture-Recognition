@@ -1,7 +1,7 @@
 from src.internal.fft_spectrum import *
 from src.AvianRDKWrapper.ifxRadarSDK import *
 from src.utils.doppler import DopplerAlgo
-from src.utils.common import do_inference_processing, do_preprocessing
+from src.utils.common import do_inference_processing_np, do_preprocessing
 from src.utils.debouncer_time import DebouncerTime
 import threading
 import numpy as np
@@ -70,7 +70,7 @@ class PredictionInference:
                     dfft_dbfs = algo.compute_doppler_map(mat, i_ant)
                     data_all_antennas.append(dfft_dbfs)
 
-                range_doppler = do_inference_processing(data_all_antennas)
+                range_doppler = do_inference_processing_np(data_all_antennas)
                 self.debouncer.add_scan(range_doppler)
 
                 dtm, rtm = self.debouncer.get_scans()

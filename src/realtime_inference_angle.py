@@ -1,7 +1,7 @@
 from src.internal.fft_spectrum import *
 from src.AvianRDKWrapper.ifxRadarSDK import *
 from src.utils.doppler import DopplerAlgo
-from src.utils.common import do_inference_processing, do_inference_processing_RAM
+from src.utils.common import do_inference_processing_np, do_inference_processing_RAM
 from src.utils.debouncer_time import DebouncerTime
 import torch
 import matplotlib.pyplot as plt
@@ -178,7 +178,7 @@ class PredictionInference:
 
                 ################# RANGE-DOPPLER MAP PROCESSING #################
                 # Range-Doppler Map
-                range_doppler = do_inference_processing(data_all_antennas)
+                range_doppler = do_inference_processing_np(data_all_antennas)
                 self.debouncer.add_scan(range_doppler, angle_map=range_angle)
 
                 dtm, rtm, atm = self.debouncer.get_scans()   # Only the first channel is used
