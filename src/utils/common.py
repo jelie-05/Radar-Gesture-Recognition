@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torchvision import transforms
 from src.AvianRDKWrapper.ifxRadarSDK import *
 from sklearn.preprocessing import MinMaxScaler, normalize
@@ -19,19 +20,11 @@ def do_preprocessing(range_doppler):
 
     return range_doppler
 
-# def do_inference_processing(range_doppler: np.array):
-#     range_doppler = do_preprocessing(range_doppler)
-
-#     range_doppler = torch.from_numpy(range_doppler).float()
-#     range_doppler = torch.unsqueeze(range_doppler, 0)
-
-#     return range_doppler
-
-def do_inference_processing_np(range_doppler: np.array):
+def do_inference_processing(range_doppler: np.array):
     range_doppler = do_preprocessing(range_doppler)
 
-    range_doppler = range_doppler.astype(np.float32)
-    range_doppler = np.expand_dims(range_doppler, axis=0)  # Add batch dimension
+    range_doppler = torch.from_numpy(range_doppler).float()
+    range_doppler = torch.unsqueeze(range_doppler, 0)
 
     return range_doppler
 
