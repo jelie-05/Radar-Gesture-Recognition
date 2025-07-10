@@ -24,6 +24,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+
 
 using namespace tvm::runtime;
 
@@ -133,23 +135,64 @@ int main() {
         }
         std::cout << "\n";
 
-        // Softmax
-        float sum_exp = 0.0f;
-        std::vector<float> probs(4);
-        for (int i = 0; i < 4; ++i) {
-            probs[i] = std::exp(output_data[i]);
-            sum_exp += probs[i];
-        }
-        for (int i = 0; i < 4; ++i) {
-            probs[i] /= sum_exp;
+        // // Softmax
+        // float sum_exp = 0.0f;
+        // std::vector<float> probs(4);
+        // for (int i = 0; i < 4; ++i) {
+        //     probs[i] = std::exp(output_data[i]);
+        //     sum_exp += probs[i];
+        // }
+        // for (int i = 0; i < 4; ++i) {
+        //     probs[i] /= sum_exp;
+        // }
+
+        // std::cout << "Softmax Output vs Expected:\n";
+        // for (int i = 0; i < 4; ++i) {
+        //     std::cout << "Output[" << i << "] = " << std::fixed << std::setprecision(5)
+        //               << probs[i] << "\n";
+        // }
+        
+        // // Exporting the output to a file via TCP
+        // Define server details (original device IP & port)
+        const char* SERVER_IP = "192.168.1.123"; 
+        const int SERVER_PORT = 5006;  
+
+        // Create socket
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+            perror("Socket creation error");
+            return 1;
         }
 
-        std::cout << "Softmax Output vs Expected:\n";
-        for (int i = 0; i < 4; ++i) {
-            std::cout << "Output[" << i << "] = " << std::fixed << std::setprecision(5)
-                      << probs[i] << "\n";
+        // 2. Prepare server address struct
+        sockaddr_in serv_addr;
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(SERVER_PORT);
+        if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+            std::cerr << "Invalid address/ Address not supported\n";
+            return 1;
         }
-        
+
+        // 3. Connect to server (Python listener)
+        if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+            perror("Connection Failed");
+            return 1;
+        }
+
+        // 4. Send data length first
+        uint32_t data_len = sizeof(output_data); // Number of bytes in the float array
+        uint32_t data_len_n = htonl(data_len);
+        send(sock, &data_len_n, sizeof(data_len_n), 0);
+
+        // Sending the data
+        send(sock, output_data, sizeof(output_data), 0); // Send array directly
+
+        std::cout << "Sent " << data_len << " bytes!\n";
+
+        // Close the socket
+        close(sock);
+        return 0;
+
     }
 
     return 0;
