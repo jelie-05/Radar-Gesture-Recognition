@@ -87,3 +87,9 @@ target_include_directories(run_c PRIVATE
     model-micro/codegen/host/include
     ${PROJECT_SOURCE_DIR}/include
 )
+
+add_executable(run_inference main_inference.cpp ${MODEL_MICRO_SRCS})
+target_include_directories(run_inference PRIVATE
+    model-micro/codegen/host/include
+    ${PROJECT_SOURCE_DIR}/include
+)

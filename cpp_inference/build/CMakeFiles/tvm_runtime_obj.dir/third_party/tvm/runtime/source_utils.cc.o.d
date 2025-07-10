@@ -1,7 +1,7 @@
 CMakeFiles/tvm_runtime_obj.dir/third_party/tvm/runtime/source_utils.cc.o: \
- /home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/source_utils.cc \
+ /home/swadiryus/projects/01_myprojects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/source_utils.cc \
  /usr/include/stdc-predef.h \
- /home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/source_utils.h \
+ /home/swadiryus/projects/01_myprojects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/source_utils.h \
  /usr/include/c++/11/string \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

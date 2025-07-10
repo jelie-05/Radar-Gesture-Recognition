@@ -8,15 +8,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/swadiryus/projects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/dso_library.cc" "CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.o" "gcc" "CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.o.d"
+  "/home/swadiryus/projects/01_myprojects/Radar-Gesture-Recognition/cpp_inference/third_party/tvm/runtime/dso_library.cc" "CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.o" "gcc" "CMakeFiles/tvm_runtime_dso_loader_obj.dir/third_party/tvm/runtime/dso_library.cc.o.d"
   )
 
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.
