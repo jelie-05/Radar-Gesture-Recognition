@@ -33,6 +33,8 @@ class DebouncerTime:
         rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
         dtm = processed_frame[h, :].unsqueeze(1)
 
+        print(f"rtm shape: {rtm.shape}, dtm shape: {dtm.shape}")
+
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
 
@@ -59,7 +61,7 @@ class DebouncerTime:
         # rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
         # dtm = processed_frame[h, :].unsqueeze(1)
         rtm = processed_frame[:, w].reshape(-1, 1)
-        dtm = processed_frame[h, :].reshape(1, -1)
+        dtm = processed_frame[h, :].reshape(-1, 1)
 
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
