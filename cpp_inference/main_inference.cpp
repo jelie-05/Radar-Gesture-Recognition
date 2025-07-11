@@ -90,34 +90,34 @@ int main() {
     }
     std::cout << "[Receiver] Connected to client.\n";
 
-    // Define server details (original device IP & port)
-    const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
-    const int SERVER_PORT = 5006;  
+    // // Define server details (original device IP & port)
+    // const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
+    // const int SERVER_PORT = 5006;  
 
-    // Create socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("Socket creation error");
-        return 1;
-    }
-    std::cout << "Socket created successfully.\n";
+    // // Create socket
+    // int sock = socket(AF_INET, SOCK_STREAM, 0);
+    // if (sock < 0) {
+    //     perror("Socket creation error");
+    //     return 1;
+    // }
+    // std::cout << "Socket created successfully.\n";
 
-    // Prepare server address struct
-    sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address/ Address not supported\n";
-        return 1;
-    }
-    std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
+    // // Prepare server address struct
+    // sockaddr_in serv_addr;
+    // serv_addr.sin_family = AF_INET;
+    // serv_addr.sin_port = htons(SERVER_PORT);
+    // if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+    //     std::cerr << "Invalid address/ Address not supported\n";
+    //     return 1;
+    // }
+    // std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
 
-    // Connect to server (Python listener)
-    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection Failed");
-        return 1;
-    }
-    std::cout << "Connected to server.\n";
+    // // Connect to server (Python listener)
+    // if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+    //     perror("Connection Failed");
+    //     return 1;
+    // }
+    // std::cout << "Connected to server.\n";
 
     // // Initializing for prediction
     // === Allocate input/output buffers ===
@@ -132,7 +132,10 @@ int main() {
 
     while (true) {
         uint8_t length_buf[4];
-        if (!recv_all(client_fd, length_buf, 4)) break;
+        if (!recv_all(client_fd, length_buf, 4)){
+            std::cout << "Data source disconnected or error occurred.\n" << std::endl;
+            break;
+        }
 
         // Convert big-endian to host uint32_t
         uint32_t payload_size = 
@@ -142,24 +145,27 @@ int main() {
               (length_buf[3]);
 
         std::vector<uint8_t> payload(payload_size);
-        if (!recv_all(client_fd, payload.data(), payload_size)) break;
+        if (!recv_all(client_fd, payload.data(), payload_size)){
+            std::cout << "Failed to receive complete payload. Disconnected or error occurred.\n" << std::endl;
+            break;
+        }
 
         std::cout << "[Frame] Received payload of size: " << payload_size << " bytes.\n";
 
-        size_t num_floats = payload_size / sizeof(float);
-        float* data = reinterpret_cast<float*>(payload.data());
+        // size_t num_floats = payload_size / sizeof(float);
+        // float* data = reinterpret_cast<float*>(payload.data());
 
-        constexpr size_t expected_floats = 1 * 2 * 32 * 10;
-        if (num_floats != expected_floats) {
-            std::cerr << "ERROR: Received frame does not match input size! "
-                      << "Expected " << expected_floats << " floats, got " << num_floats << std::endl;
-            continue;
-        }
+        // constexpr size_t expected_floats = 1 * 2 * 32 * 10;
+        // if (num_floats != expected_floats) {
+        //     std::cerr << "ERROR: Received frame does not match input size! "
+        //               << "Expected " << expected_floats << " floats, got " << num_floats << std::endl;
+        //     continue;
+        // }
 
-        std::memcpy(input_data, data, num_floats * sizeof(float));
-        
+        // std::memcpy(input_data, data, num_floats * sizeof(float));
+
+        std::memcpy(input_data, payload.data(), payload.size());
         int ret = tvmgen_default_run(&inputs, &outputs);
-
         std::cout << "Logits:\n";
         for (int i = 0; i < 4; ++i) {
             std::cout << std::fixed << std::setprecision(5) << output_data[i] << " ";
@@ -168,33 +174,27 @@ int main() {
         
         // // Exporting the output to a file via TCP
         // // Define server details (original device IP & port)
-        // const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
-        // const int SERVER_PORT = 5006;  
+        const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
+        const int SERVER_PORT = 5006;  
 
-        // // Create socket
-        // int sock = socket(AF_INET, SOCK_STREAM, 0);
-        // if (sock < 0) {
-        //     perror("Socket creation error");
-        //     return 1;
-        // }
-        // std::cout << "Socket created successfully.\n";
+        // Create socket
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+            perror("Socket creation error");
+            continue;;
+        }
 
-        // // Prepare server address struct
-        // sockaddr_in serv_addr;
-        // serv_addr.sin_family = AF_INET;
-        // serv_addr.sin_port = htons(SERVER_PORT);
-        // if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-        //     std::cerr << "Invalid address/ Address not supported\n";
-        //     return 1;
-        // }
-        // std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
+        // Prepare server address struct
+        sockaddr_in serv_addr;
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(SERVER_PORT);
+        inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr);
 
-        // // Connect to server (Python listener)
-        // if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        //     perror("Connection Failed");
-        //     return 1;
-        // }
-        // std::cout << "Connected to server.\n";
+        if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+            perror("Connection to Python Failed");
+            close(sock);
+            continue;
+        }
 
         // Send data length first
         uint32_t data_len = sizeof(output_data); // Number of bytes in the float array
