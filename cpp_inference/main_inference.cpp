@@ -90,6 +90,28 @@ int main() {
     }
     std::cout << "[Receiver] Connected to client.\n";
 
+    // Define server details (original device IP & port)
+    const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
+    const int SERVER_PORT = 5006;  
+
+    // Create socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Socket creation error");
+        return 1;
+    }
+    std::cout << "Socket created successfully.\n";
+
+    // Prepare server address struct
+    sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address/ Address not supported\n";
+        return 1;
+    }
+    std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
+
     // // Initializing for prediction
     // === Allocate input/output buffers ===
     float input_data[1 * 2 * 32 * 10];  // shape: [1, 2, 32, 10]
@@ -138,27 +160,27 @@ int main() {
         std::cout << "\n";
         
         // // Exporting the output to a file via TCP
-        // Define server details (original device IP & port)
-        const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
-        const int SERVER_PORT = 5006;  
+        // // Define server details (original device IP & port)
+        // const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
+        // const int SERVER_PORT = 5006;  
 
-        // Create socket
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) {
-            perror("Socket creation error");
-            return 1;
-        }
-        std::cout << "Socket created successfully.\n";
+        // // Create socket
+        // int sock = socket(AF_INET, SOCK_STREAM, 0);
+        // if (sock < 0) {
+        //     perror("Socket creation error");
+        //     return 1;
+        // }
+        // std::cout << "Socket created successfully.\n";
 
-        // Prepare server address struct
-        sockaddr_in serv_addr;
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_port = htons(SERVER_PORT);
-        if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-            std::cerr << "Invalid address/ Address not supported\n";
-            return 1;
-        }
-        std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
+        // // Prepare server address struct
+        // sockaddr_in serv_addr;
+        // serv_addr.sin_family = AF_INET;
+        // serv_addr.sin_port = htons(SERVER_PORT);
+        // if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+        //     std::cerr << "Invalid address/ Address not supported\n";
+        //     return 1;
+        // }
+        // std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
 
         // Connect to server (Python listener)
         if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
@@ -181,7 +203,6 @@ int main() {
 
         // Close the socket
         close(sock);
-        return 0;
 
     }
 
