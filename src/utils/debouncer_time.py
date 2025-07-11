@@ -1,4 +1,7 @@
+import numpy as np
+
 class DebouncerTime:
+
     def __init__(self, detect_threshold=0.6, noise_threshold=0.3, memory_length=30, min_num_detections=3):
 
         self.detect_threshold = detect_threshold
@@ -47,13 +50,16 @@ class DebouncerTime:
 
         # Only add the first channel !!!
         processed_frame = frame[0, 0, :, :]
-        max_value = processed_frame.max()
+        max_value = np.max(processed_frame)
 
-        h, w = (processed_frame == max_value).nonzero(as_tuple=True)
+        # h, w = (processed_frame == max_value).nonzero(as_tuple=True)
+        h, w = np.where(processed_frame == max_value)
         h, w = h[0], w[0]
 
-        rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
-        dtm = processed_frame[h, :].unsqueeze(1)
+        # rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
+        # dtm = processed_frame[h, :].unsqueeze(1)
+        rtm = processed_frame[:, w].reshape(-1, 1)
+        dtm = processed_frame[h, :].reshape(1, -1)
 
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
