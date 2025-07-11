@@ -33,22 +33,46 @@ def recv_all(sock, size):
         data += more
     return data
 
+# with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+#     server.bind((HOST, PORT))
+#     server.listen(1)
+#     print("Waiting for connection...")
+#     conn, addr = server.accept()
+#     with conn:
+#         print(f"Connected by {addr}")
+
+#         # Option 1: If you sent just the 4 floats (no length)
+#         while True:
+#             data = recv_all(conn, 4*4)  # 4 floats, each 4 bytes
+#             floats = struct.unpack('!4f', data)  # Network byte order
+#             print(f"Received floats: {floats}")
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     server.bind((HOST, PORT))
     server.listen(1)
-    print("Waiting for connection...")
-    conn, addr = server.accept()
-    with conn:
-        print(f"Connected by {addr}")
+    print(f"Server listening on {HOST}:{PORT}")
+    
+    while True:
+        print("Waiting for connection...")
+        conn, addr = server.accept()
 
-        # Option 1: If you sent just the 4 floats (no length)
-        while True:
-            data = recv_all(conn, 4*4)  # 4 floats, each 4 bytes
-            floats = struct.unpack('!4f', data)  # Network byte order
-            print(f"Received floats: {floats}")
+        with conn:
+            try:
+                len_data = recv_all(conn, 4)  # Read the first 4 bytes for length
 
-        # Option 2: If you sent a length header first
-        # data_len = struct.unpack('!I', recv_all(conn, 4))[0]
-        # data = recv_all(conn, data_len)
-        # floats = struct.unpack(f'!{data_len // 4}f', data)
-        # print(f"Received floats: {floats}")
+                # Unpack as a network-ordered (big-endian) unsigned integer
+                payload_size = struct.unpack('!I', len_data)[0]  # Unpack the length
+
+                print(f"Payload size: {payload_size} bytes")
+
+                payload = recv_all(conn, payload_size)
+                num_floats = payload_size // 4  # Each float is 4 bytes
+                floats = struct.unpack(f'!{num_floats}f', payload)
+                print(f"Received floats: {floats}")
+            except EOFError as e:
+                print(f"Client disconnected: {e}")
+
+        print("Connection closed, waiting for new connection...")
+    

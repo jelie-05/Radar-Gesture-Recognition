@@ -112,6 +112,13 @@ int main() {
     }
     std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
 
+    // Connect to server (Python listener)
+    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection Failed");
+        return 1;
+    }
+    std::cout << "Connected to server.\n";
+
     // // Initializing for prediction
     // === Allocate input/output buffers ===
     float input_data[1 * 2 * 32 * 10];  // shape: [1, 2, 32, 10]
@@ -182,12 +189,12 @@ int main() {
         // }
         // std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
 
-        // Connect to server (Python listener)
-        if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-            perror("Connection Failed");
-            return 1;
-        }
-        std::cout << "Connected to server.\n";
+        // // Connect to server (Python listener)
+        // if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        //     perror("Connection Failed");
+        //     return 1;
+        // }
+        // std::cout << "Connected to server.\n";
 
         // Send data length first
         uint32_t data_len = sizeof(output_data); // Number of bytes in the float array
