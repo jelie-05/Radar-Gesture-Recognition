@@ -139,7 +139,7 @@ int main() {
         
         // // Exporting the output to a file via TCP
         // Define server details (original device IP & port)
-        const char* SERVER_IP = "192.168.1.1"; // Raspi IP
+        const char* SERVER_IP = "127.0.0.1"; // "192.168.1.1"; // Raspi IP
         const int SERVER_PORT = 5006;  
 
         // Create socket
@@ -148,6 +148,7 @@ int main() {
             perror("Socket creation error");
             return 1;
         }
+        std::cout << "Socket created successfully.\n";
 
         // Prepare server address struct
         sockaddr_in serv_addr;
@@ -157,20 +158,24 @@ int main() {
             std::cerr << "Invalid address/ Address not supported\n";
             return 1;
         }
+        std::cout << "Connecting to server at " << SERVER_IP << ":" << SERVER_PORT << "...\n";
 
         // Connect to server (Python listener)
         if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
             perror("Connection Failed");
             return 1;
         }
+        std::cout << "Connected to server.\n";
 
         // Send data length first
         uint32_t data_len = sizeof(output_data); // Number of bytes in the float array
         uint32_t data_len_n = htonl(data_len);
         send(sock, &data_len_n, sizeof(data_len_n), 0);
 
+        std::cout << "Sending " << data_len << " bytes of output data...\n";
+
         // Sending the data
-        send(sock, output_data, sizeof(output_data), 0); // Send array directly
+        send(sock, output_data, data_len, 0); // Send array directly
 
         std::cout << "Sent " << data_len << " bytes!\n";
 

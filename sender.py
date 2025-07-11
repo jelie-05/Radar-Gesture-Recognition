@@ -40,13 +40,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
     with conn:
         print(f"Connected by {addr}")
 
-        # Option 1: If you sent just the 4 floats (no length)
-        data = recv_all(conn, 4*4)  # 4 floats, each 4 bytes
-        floats = struct.unpack('!4f', data)  # Network byte order
-        print(f"Received floats: {floats}")
+        # # Option 1: If you sent just the 4 floats (no length)
+        # data = recv_all(conn, 4*4)  # 4 floats, each 4 bytes
+        # floats = struct.unpack('!4f', data)  # Network byte order
+        # print(f"Received floats: {floats}")
 
         # Option 2: If you sent a length header first
         # data_len = struct.unpack('!I', recv_all(conn, 4))[0]
         # data = recv_all(conn, data_len)
         # floats = struct.unpack(f'!{data_len // 4}f', data)
         # print(f"Received floats: {floats}")
+
+        data_len = struct.unpack('!I', recv_all(conn, 4))[0]
+        data = recv_all(conn, data_len)
+
+        floats = struct.unpack(f'!{data_len // 4}f', data)
+        print(f"Received floats: {floats}")
