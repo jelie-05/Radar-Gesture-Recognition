@@ -45,10 +45,10 @@ class DopplerAlgo:
         num_samples_per_chirp = config["num_samples_per_chirp"]
 
         # compute Blackman-Harris Window matrix over chirp samples(range)
-        self.range_window = signal.blackmanharris(num_samples_per_chirp).reshape(1,num_samples_per_chirp)
+        self.range_window = signal.windows.blackmanharris(num_samples_per_chirp).reshape(1,num_samples_per_chirp)
 
         # compute Blackman-Harris Window matrix over number of chirps(velocity)
-        self.doppler_window = signal.blackmanharris(self.num_chirps_per_frame).reshape(1,self.num_chirps_per_frame)
+        self.doppler_window = signal.windows.blackmanharris(self.num_chirps_per_frame).reshape(1,self.num_chirps_per_frame)
 
         # parameter for moving target indicator (MTI)
         self.mti_alpha = mti_alpha

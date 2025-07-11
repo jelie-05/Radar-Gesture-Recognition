@@ -37,6 +37,31 @@ class DebouncerTime:
             atm = angle_map[h,:].unsqueeze(1)  # Angle-Time Map
             self.atm_memory.append(atm)
 
+    def add_scan_np(self, frame, angle_map=None):
+        if len(self.dtm_memory) >= self.memory_length:
+            self.dtm_memory.pop(0)
+            self.rtm_memory.pop(0)
+
+            if angle_map is not None:
+                self.atm_memory.pop(0)
+
+        # Only add the first channel !!!
+        processed_frame = frame[0, 0, :, :]
+        max_value = processed_frame.max()
+
+        h, w = (processed_frame == max_value).nonzero(as_tuple=True)
+        h, w = h[0], w[0]
+
+        rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
+        dtm = processed_frame[h, :].unsqueeze(1)
+
+        self.dtm_memory.append(dtm)
+        self.rtm_memory.append(rtm)
+
+        if angle_map is not None:
+            atm = angle_map[h,:].unsqueeze(1)  # Angle-Time Map
+            self.atm_memory.append(atm)
+
     def get_scans(self):
         if self.atm_memory:
             return self.dtm_memory, self.rtm_memory, self.atm_memory

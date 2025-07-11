@@ -14,7 +14,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),  '..')))
 from utils.doppler import DopplerAlgo
 from AvianRDKWrapper.ifxRadarSDK import *
-from utils.common import do_inference_processing_np, do_preprocessing
+from utils.common import do_inference_processing, do_preprocessing
 from utils.debouncer_time import DebouncerTime
 import pandas as pd
 
@@ -126,7 +126,7 @@ class RadarGestureDataset(Dataset):
             data_all_antennas.append(dfft_dbfs)
 
         # Range-Doppler-Map
-        range_doppler = do_inference_processing_np(data_all_antennas)
+        range_doppler = do_inference_processing(data_all_antennas)
         self.debouncer.add_scan(range_doppler)
         dtm, rtm = self.debouncer.get_scans()
 
