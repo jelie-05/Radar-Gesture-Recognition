@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 class DebouncerTime:
 
@@ -15,16 +16,16 @@ class DebouncerTime:
 
         self.detection_memory = []
 
-    def add_scan(self, frame, angle_map=None):
+    def add_scan(self, rdm, ram=None, channel=0):
         if len(self.dtm_memory) >= self.memory_length:
             self.dtm_memory.pop(0)
             self.rtm_memory.pop(0)
 
-            if angle_map is not None:
+            if ram is not None:
                 self.atm_memory.pop(0)
 
         # Only add the first channel !!!
-        processed_frame = frame[0, 0, :, :]
+        processed_frame = rdm[0, channel, :, :]
         max_value = processed_frame.max()
 
         h, w = (processed_frame == max_value).nonzero(as_tuple=True)
@@ -33,13 +34,11 @@ class DebouncerTime:
         rtm = processed_frame[:, w].unsqueeze(1)  # Range-Time Map
         dtm = processed_frame[h, :].unsqueeze(1)
 
-        print(f"rtm shape: {rtm.shape}, dtm shape: {dtm.shape}")
-
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
 
-        if angle_map is not None:
-            atm = angle_map[h,:].unsqueeze(1)  # Angle-Time Map
+        if ram is not None:
+            atm = ram.max(dim=1).values  # Angle-Time Map
             self.atm_memory.append(atm)
 
     def add_scan_np(self, frame, angle_map=None):

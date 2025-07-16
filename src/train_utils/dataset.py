@@ -1,22 +1,20 @@
 from torch.utils.data import Dataset, DataLoader
-import h5py
-from sklearn.preprocessing import LabelEncoder
 import torch
-import torchvision.transforms as transforms
-import re
 import glob
 import matplotlib.pyplot as plt
-from torch.nn.utils.rnn import pad_sequence
 import numpy as np
-
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),  '..')))
-from utils.doppler import DopplerAlgo
-from AvianRDKWrapper.ifxRadarSDK import *
-from utils.common import do_inference_processing, do_preprocessing
-from utils.debouncer_time import DebouncerTime
 import pandas as pd
+from collections import OrderedDict
+from ifxAvian import Avian
+import os
+
+from src.utils.DBF import DBF
+from src.utils.doppler_avian import DopplerAlgo
+from src.utils.doppler import DopplerAlgo as DopplerAlgoOld
+from src.AvianRDKWrapper.ifxRadarSDK import *
+from src.utils.common import do_inference_processing, do_inference_processing_RAM
+from src.utils.debouncer_time import DebouncerTime
+
 
 class RadarGestureDataset(Dataset):
     def __init__(self, root_dir='data/recording', annotation_csv='annotation', load_angle=False):
@@ -35,6 +33,10 @@ class RadarGestureDataset(Dataset):
 
         self.device = Device()
         self.num_rx_antennas = self.device.get_sensor_information()["num_rx_antennas"]
+        if self.load_angle:
+            self.num_beams = 32
+            self.max_angle_degrees = 40
+            self.dbf = DBF(self.num_rx_antennas, num_beams = self.num_beams, max_angle_degrees =self.max_angle_degrees)
 
         rx_mask = (1 << self.num_rx_antennas) - 1
         metric = {
@@ -53,9 +55,7 @@ class RadarGestureDataset(Dataset):
 
         cfg = self.device.metrics_to_config(**metric)
         self.device.set_config(**cfg)
-        self.algo = DopplerAlgo(self.device.get_config(), self.num_rx_antennas)
-        # self.debouncer = DebouncerTime(memory_length=self.observation_length,)
-        
+        self.algo = DopplerAlgoOld(self.device.get_config(), self.num_rx_antennas)
 
         # Load samples data from .csv files
         self.annotation = pd.read_csv(os.path.join(self.data_root, f'{annotation_csv}.csv'))
@@ -139,7 +139,7 @@ class RadarGestureDataset(Dataset):
             num_chirp_per_frame = data_all_antennas_np.shape[1]/2
             num_samples_per_chirp = data_all_antennas_np.shape[0]
 
-            rd_beam_formed = dbf.run(data_all_antennas_np)
+            rd_beam_formed = self.dbf.run(data_all_antennas_np)
 
             beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
             for i_beam in range(self.num_beams):
@@ -168,7 +168,107 @@ class RadarGestureDataset(Dataset):
             atm = None
     
         return rtm, dtm
+
+
+class IFXRadarDataset(Dataset):
+    def __init__(self, radar_config, root_dir='data/recording', cache_size=3):
+        self.file_paths = glob.glob(os.path.join(root_dir, '*'))
+
+        self.idx_mapping = []  # (file_idx, local_idx in the file)
+        self.cache_size = cache_size
+
+        for i in range(len(self.file_paths)):
+            data = np.load(self.file_paths[i], mmap_mode='r')
+            length = len(data['inputs'])
+            self.idx_mapping.extend([(i, j) for j in range(length)])
+
+        self._cache = OrderedDict()
+
+        # Radar configuration
+        self.radar_config = radar_config
+        self.num_rx_antennas = radar_config['num_rx_antennas']
+        self.num_beams = radar_config['num_beams']
+        self.doppler = DopplerAlgo(self.radar_config['dev_config'], 
+                                   self.num_rx_antennas)
+        
+        self.dbf = DBF(self.num_rx_antennas, 
+                       num_beams = self.num_beams, 
+                       max_angle_degrees = radar_config['max_angle_degrees'])
+
+    def __len__(self):
+        return len(self.idx_mapping)
     
+    def __getitem__(self, idx):
+        file_idx, local_idx = self.idx_mapping[idx]
+        file_path = self.file_paths[file_idx]
+
+        if file_idx in self._cache:
+            data = self._cache[file_idx]
+            self._cache.move_to_end(file_idx)
+        else:
+            data = np.load(file_path, mmap_mode='r')
+            self._cache[file_idx] = data
+            self._cache.move_to_end(file_idx)
+            if len(self._cache) > self.cache_size:
+                self._cache.popitem(last=False)
+
+        frames = data['inputs'][local_idx]  # Frame data
+        targets = data['targets'][local_idx]    # TODO: consider how to use targets
+
+        # Process the frames to get RTM, DTM, and ATM
+        self.debouncer = DebouncerTime(memory_length=frames.shape[0])
+        for i in range(frames.shape[0]):
+            rtm, dtm, atm = self.project_to_time(frames[i])
+
+        rtm = torch.cat(rtm, dim=1)
+        dtm = torch.cat(dtm, dim=1)
+        atm = torch.stack(atm, dim=1) if atm is not None else None
+        inputs = torch.stack([rtm, dtm, atm], dim=1)  # Shape: (3, H, W)
+
+        # Process targets into labels
+        # take the non zero element
+        targets = torch.from_numpy(targets).long()
+        labels = targets[targets != 0].unique().item()
+
+        return inputs, labels
+    
+    def get_class_name(self, label):
+        pass
+
+    def get_mapping(self):
+        pass
+
+    def project_to_time(self, frame):
+        # Range Doppler Map (RDM)
+        data_all_antennas = []
+        for i in range(self.num_rx_antennas):
+            mat = frame[i, :, :]
+            dfft_dbfs = self.doppler.compute_doppler_map(mat, i)
+            data_all_antennas.append(dfft_dbfs)
+        range_doppler = do_inference_processing(data_all_antennas)
+
+        # Range-Angle Map (RAM)
+        data_all_antennas_np = np.stack(data_all_antennas, axis=0)
+        data_all_antennas_np = data_all_antennas_np.transpose(1,2,0)
+        num_samples_per_chirp = data_all_antennas_np.shape[0]
+
+        rd_beam_formed = self.dbf.run(data_all_antennas_np)
+
+        beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
+        for i_beam in range(self.num_beams):
+            doppler_i = rd_beam_formed[:,:,i_beam]
+            beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
+
+        max_energy = np.max(beam_range_energy)
+        scale = 150
+        beam_range_energy = scale*(beam_range_energy/max_energy - 1)
+        range_angle = do_inference_processing_RAM(beam_range_energy)
+
+        self.debouncer.add_scan(range_doppler, range_angle)
+        rtm, dtm, atm = self.debouncer.get_scans()
+
+        return rtm, dtm, atm
+
 
 def plot_rtm_dtm(rtm, dtm):
     # Define the custom color map (white for max, blue for min)
@@ -212,22 +312,14 @@ class DataGenerator:
 
     def custom_collate_fn(self, batch):
         rtms, dtms, classes = zip(*batch)
-        rtm_adjusted = []
-        dtm_adjusted = []
         batch = {}
-        
-
         rtm_tensor = torch.stack(rtms)
         dtm_tensor = torch.stack(dtms)
 
         rdtm_tensor = torch.stack([rtm_tensor, dtm_tensor], dim=1)
-
         classes_np = np.array(classes)
-
-        # classes_tensor = torch.tensor(classes, dtype=torch.long)
         classes_tensor = torch.from_numpy(classes_np).long()
 
-        # return rdtm_tensor, classes_tensor
         batch['rdtm'] = rdtm_tensor
         batch['class'] = classes_tensor
 
@@ -237,17 +329,82 @@ class DataGenerator:
         return self.dataloader
 
 
+class IFXDataGen:
+    def __init__(self, dataset, batch_size=8, shuffle=True, num_workers=4, drop_last=False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.num_workers = num_workers
+
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            collate_fn=self.custom_collate_fn,
+            num_workers=self.num_workers,
+            drop_last=drop_last
+        )
+
+    def custom_collate_fn(self, batch):
+        inputs, labels = zip(*batch)
+        inputs_tensor = torch.stack(inputs, dim=0)  # Shape: (batch_size, 3, H, W)
+        labels_tensor = torch.tensor(labels, dtype=torch.long)
+
+        batch = {
+            'inputs': inputs_tensor,
+            'labels': labels_tensor
+        }
+        return batch
+
+    def get_loader(self):
+        return self.dataloader
+
+
 if __name__ == "__main__":
-    dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
+    # dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
 
-    rtm, dtm, sample_class = dataset[20]
+    # rtm, dtm, sample_class = dataset[20]
 
-    plot_rtm_dtm(rtm, dtm)
+    # # plot_rtm_dtm(rtm, dtm)
 
-    # dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=custom_collate_fn)
-    dataloader = DataGenerator(dataset, batch_size=8, shuffle=True, max_length=100).get_loader()
+    # # dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=custom_collate_fn)
+    # dataloader = DataGenerator(dataset, batch_size=8, shuffle=True, max_length=100).get_loader()
+    # for batch in dataloader:
+    #     batch_videos = batch['rdtm']
+    #     batch_classes = batch['class']
+    #     print(f"Batch video shape: {batch_videos.shape}")
+    #     print(f"Batch class IDs: {batch_classes}")
+
+    dev_config = Avian.DeviceConfig(
+        sample_rate_Hz = 2000000,       # 1MHZ
+        rx_mask = 7,                      # activate RX1 and RX3
+        tx_mask = 1,                      # activate TX1
+        if_gain_dB = 25,                  # gain of 33dB
+        tx_power_level = 31,              # TX power level of 31
+        start_frequency_Hz = 58.5e9,        # 60GHz 
+        end_frequency_Hz = 62.5e9,        # 61.5GHz
+        num_chirps_per_frame = 32,       # 128 chirps per frame
+        num_samples_per_chirp = 64,       # 64 samples per chirp
+        chirp_repetition_time_s = 0.0003, # 0.5ms
+        frame_repetition_time_s = 1/33,   # 0.15s, frame_Rate = 6.667Hz
+        mimo_mode = 'off'                 # MIMO disabled
+    )
+
+    config = {'dev_config': dev_config, 
+              'num_rx_antennas': 3, 
+              'num_beams': 32,
+              'max_angle_degrees': 40}
+            
+    dataset = IFXRadarDataset(config, root_dir='/home/swadiryus/projects/dataset/radar_gesture_dataset')
+    dataloader = IFXDataGen(dataset, batch_size=8, shuffle=True, num_workers=0).get_loader()
     for batch in dataloader:
-        batch_videos = batch['rdtm']
-        batch_classes = batch['class']
-        print(f"Batch video shape: {batch_videos.shape}")
-        print(f"Batch class IDs: {batch_classes}")
+        inputs = batch['inputs']
+        labels = batch['labels']
+        print(f"Batch inputs shape: {inputs.shape}")
+        print(f"Batch labels: {labels}")
+
+    # dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
+    # for inputs, targets in dataloader:
+    #     print(f"Inputs shape: {inputs.shape}, Targets shape: {targets.shape}")
+    #     print(f"Unique targets: {np.unique(targets.numpy())}")
+    #     break  # Just to test the first batch

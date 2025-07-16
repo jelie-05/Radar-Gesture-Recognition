@@ -1,19 +1,19 @@
-import socket
-import numpy as np
-import time
+from ifxAvian import Avian
+from src.utils.doppler_avian import DopplerAlgo
 
-HOST = '127.0.0.1'
-PORT = 5005
-
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-    sock.connect((HOST, PORT))
-    while True:  # send 100 frames (change as needed, or use while True for infinite)
-        frame = np.random.rand(1, 2, 32, 10).astype(np.float32)
-        data_bytes = frame.tobytes()
-        frame_size = len(data_bytes)
-        sock.sendall(frame_size.to_bytes(4, 'big'))  # send 4-byte length
-        sock.sendall(data_bytes)
-        print(f"size: {frame_size} bytes")
-        time.sleep(0.5)  # send a frame every 0.5 second (adjust as you like)
-
-    
+config = Avian.DeviceConfig(
+    sample_rate_Hz = 2500000,       # 1MHZ
+    rx_mask = 7,                      # activate RX1 and RX3
+    tx_mask = 1,                      # activate TX1
+    if_gain_dB = 25,                  # gain of 33dB
+    tx_power_level = 31,              # TX power level of 31
+    start_frequency_Hz = 57569828864,        # 60GHz 
+    end_frequency_Hz = 63930171392,        # 61.5GHz
+    num_chirps_per_frame = 256,       # 128 chirps per frame
+    num_samples_per_chirp = 128,       # 64 samples per chirp
+    chirp_repetition_time_s = 0.0004112379392609, # 0.5ms
+    frame_repetition_time_s = 0.10526315867900848,   # 0.15s, frame_Rate = 6.667Hz
+    mimo_mode = 'off'                 # MIMO disabled
+)
+num_rx_antennas = 3
+algo = DopplerAlgo(config, num_rx_antennas)

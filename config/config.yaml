@@ -1,0 +1,24 @@
+experiment_name: "radargesture"
+training:
+  batch_size: 32
+  epochs: 100
+  run_id: "default_run"
+  use_amp: true
+  gradient_clip: 1.0
+  seed: 1
+  optimizer: 
+    name: "adamw"
+    learning_rate: 0.001
+    weight_decay: 0.01
+  scheduler:
+    name: "cosine"
+    warmup_epochs: 5
+data:
+  dataset_path: '/home/swadiryus/projects/dataset/radar_gesture_dataset'
+  input_channels: 3
+  output_classes: 6
+  pin_memory: true
+  num_workers: 4
+  persist_workers: true
+  prefetch_factor: 4
+  drop_last: true

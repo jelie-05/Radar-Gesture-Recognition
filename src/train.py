@@ -1,7 +1,7 @@
 from src.model.simple_model import RadarEdgeNetwork, SimpleCNN
 import torch
 import torch.nn as nn
-from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.train_utils.dataset import RadarGestureDataset, DataGenerator
 from torch.utils.data import random_split
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter

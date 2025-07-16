@@ -1,7 +1,8 @@
 from src.model.simple_model import RadarEdgeNetwork, SimpleCNN
 import torch
 import torch.nn as nn
-from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.train_utils.dataset import IFXRadarDataset, IFXDataGen
+from ifxAvian import Avian
 from torch.utils.data import random_split
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -36,11 +37,28 @@ def get_confusion_elements(y_true, y_pred, n_classes):
     return TP, FP, TN, FN
 
 def train_model(datadir, num_classes, in_channels, save_name, epochs, observation_length):
-    # dataset = SoliDataset(data_path='data/SoliData/dsp', resolution=(32, 32), num_channels=3)
-    # dataset = NumpyDataset(root_dir=datadir)
-    dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
-    print(f"Total samples in dataset: {len(dataset)}")
-
+    # Device configuration
+    dev_config = Avian.DeviceConfig(
+        sample_rate_Hz = 2000000,       # 1MHZ
+        rx_mask = 7,                      # activate RX1 and RX3
+        tx_mask = 1,                      # activate TX1
+        if_gain_dB = 25,                  # gain of 33dB
+        tx_power_level = 31,              # TX power level of 31
+        start_frequency_Hz = 58.5e9,        # 60GHz 
+        end_frequency_Hz = 62.5e9,        # 61.5GHz
+        num_chirps_per_frame = 32,       # 128 chirps per frame
+        num_samples_per_chirp = 64,       # 64 samples per chirp
+        chirp_repetition_time_s = 0.0003, # 0.5ms
+        frame_repetition_time_s = 1/33,   # 0.15s, frame_Rate = 6.667Hz
+        mimo_mode = 'off'                 # MIMO disabled
+    )
+    config = {'dev_config': dev_config, 
+              'num_rx_antennas': 3, 
+              'num_beams': 32,
+              'max_angle_degrees': 40}
+    
+    # Create dataset
+    dataset = IFXRadarDataset(config, root_dir='/home/swadiryus/projects/dataset/radar_gesture_dataset')
     generator1 = torch.Generator().manual_seed(1)
 
     total_samples = len(dataset)  # e.g., 2123
@@ -54,8 +72,8 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
 
     observation_length = observation_length
 
-    dataloader_train = DataGenerator(train_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
-    dataloader_val = DataGenerator(val_dataset, batch_size=64, shuffle=True, max_length=observation_length, num_workers=4, drop_last=True).get_loader()
+    dataloader_train = IFXDataGen(train_dataset, batch_size=64, shuffle=True, num_workers=4, drop_last=True).get_loader()
+    dataloader_val = IFXDataGen(val_dataset, batch_size=64, shuffle=True, num_workers=4, drop_last=True).get_loader()
     
     writer = SummaryWriter(log_dir=f'runs/run_{save_name}')
 
@@ -81,6 +99,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
         FP_sum = 0
         TN_sum = 0
         FN_sum = 0
+        
 
         for train_iter, batch in train_loop:
             batch_videos = batch['rdtm']
@@ -191,8 +210,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     datadir = 'data/recording'
-    in_channels = 2
-    num_classes = 4
+    in_channels = 3
+    num_classes = 5
     epochs = 50
     observation_length = 10
 

@@ -1,6 +1,6 @@
 from src.internal.fft_spectrum import *
 from src.AvianRDKWrapper.ifxRadarSDK import *
-from src.utils.doppler import DopplerAlgo
+from src.utils.doppler_avian import DopplerAlgo
 from src.utils.common import do_inference_processing, do_inference_processing_RAM
 from src.utils.debouncer_time import DebouncerTime
 import torch
@@ -13,10 +13,12 @@ from src.model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.train_utils.dataset import RadarGestureDataset
 import time
-from utils.DBF import DBF
+from src.utils.DBF import DBF
 import queue
+from ifxAvian import Avian
+
 
 class LivePlot:
     def __init__(self, max_angle_degrees: float, max_range_m: float, data_queue: queue.Queue):
@@ -84,35 +86,35 @@ class PredictionInference:
         self.num_classes = num_classes
         self.observation_length = observation_length
 
+        # Initialize the device       
+        config = Avian.DeviceConfig(
+            sample_rate_Hz = 2500000,       # 1MHZ
+            rx_mask = 7,                      # activate RX1 and RX3
+            tx_mask = 1,                      # activate TX1
+            if_gain_dB = 25,                  # gain of 33dB
+            tx_power_level = 31,              # TX power level of 31
+            start_frequency_Hz = 58.5e9,        # 60GHz 
+            end_frequency_Hz = 62.5e9,        # 61.5GHz
+            num_chirps_per_frame = 32,       # 128 chirps per frame
+            num_samples_per_chirp = 64,       # 64 samples per chirp
+            chirp_repetition_time_s = 0.0003, # 0.5ms
+            frame_repetition_time_s = 1/33,   # 0.15s, frame_Rate = 6.667Hz
+            mimo_mode = 'off'                 # MIMO disabled
+        )
+        Avian.Device().set_config(config)
+        self.num_rx_antennas = Avian.Device().get_sensor_information()["num_rx_antennas"]
+        self.num_beams = 32
+        self.max_angle_degrees = 40
+        self.max_range_m = 1.2
+
+        # Initialize Visualizer
         self.debouncer = DebouncerTime(memory_length=self.observation_length,)
         self.visualizer = Visualizer(observation_length=self.observation_length, num_classes=num_classes)
         self.prev_rtm_tensor = None
-
-        device = Device()
-        self.num_rx_antennas = device.get_sensor_information()["num_rx_antennas"]
-        rx_mask = (1 << self.num_rx_antennas) - 1
-        
-        self.metric = {
-            'sample_rate_Hz': 2500000,
-            'range_resolution_m': 0.025,
-            'max_range_m': 1,
-            'max_speed_m_s': 3,
-            'speed_resolution_m_s': 0.024,
-            'frame_repetition_time_s': 1 / 9.5,
-            'center_frequency_Hz': 60_750_000_000,
-            'rx_mask': rx_mask,
-            'tx_mask': 1,
-            'tx_power_level': 31,
-            'if_gain_dB': 25,
-        }
-
-        # self.num_beams = 27
-        self.num_beams = 32
-        self.max_angle_degrees = 40
-
         self.ra_queue = queue.Queue()
-        self.plot = LivePlot(self.max_angle_degrees, self.metric['max_range_m'], self.ra_queue)
+        self.plot = LivePlot(self.max_angle_degrees, self.max_range_m, self.ra_queue)
 
+        # Initialize the model
         self.model = SimpleCNN(in_channels=2, num_classes=self.num_classes)
         self.model.eval()
         model_path = "runs/trained_models/train_0613-last.pth"
@@ -125,12 +127,9 @@ class PredictionInference:
             self.model = self.model.to('cpu')
 
         self.dataset = RadarGestureDataset(root_dir='data/recording', annotation_csv='annotation')
-        self.datagen = DataGenerator(self.dataset, batch_size=1, shuffle=False, max_length=self.observation_length, num_workers=0, drop_last=True)
 
     def run(self):
-        with Device() as device:
-            cfg = device.metrics_to_config(**self.metric)
-            device.set_config(**cfg)
+        with Avian.Device() as device:
 
             algo = DopplerAlgo(device.get_config(), self.num_rx_antennas)
             dbf = DBF(self.num_rx_antennas, num_beams = self.num_beams, max_angle_degrees =self.max_angle_degrees)
@@ -179,7 +178,7 @@ class PredictionInference:
                 ################# RANGE-DOPPLER MAP PROCESSING #################
                 # Range-Doppler Map
                 range_doppler = do_inference_processing(data_all_antennas)
-                self.debouncer.add_scan(range_doppler, angle_map=range_angle)
+                self.debouncer.add_scan(range_doppler, ram=range_angle)
 
                 dtm, rtm, atm = self.debouncer.get_scans()   # Only the first channel is used
                 rtm_tensor = torch.stack(rtm, dim=1).float().squeeze(2)

@@ -11,7 +11,7 @@ import tflite_runtime.interpreter as tflite
 from torch.utils.data import Subset
 from tvm.micro.testing.utils import create_header_file
 
-from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.train_utils.dataset import RadarGestureDataset, DataGenerator
 
 
 def load_tflite_model(model_path: str):

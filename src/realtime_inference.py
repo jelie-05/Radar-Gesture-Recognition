@@ -13,7 +13,7 @@ from src.model.simple_model import SimpleCNN
 import os
 import pandas as pd
 import traceback
-from src.utils.dataloader_raw import RadarGestureDataset, DataGenerator
+from src.train_utils.dataset import RadarGestureDataset, DataGenerator
 
 import time
 
