@@ -223,15 +223,21 @@ class IFXRadarDataset(Dataset):
         rtm = torch.cat(rtm, dim=1)
         dtm = torch.cat(dtm, dim=1)
         atm = torch.stack(atm, dim=1) if atm is not None else None
-        inputs = torch.stack([rtm, dtm, atm], dim=1)  # Shape: (3, H, W)
+        inputs = torch.stack([rtm, dtm, atm], dim=0)  # Shape: (3, H, W)
 
         # Process targets into labels
         # take the non zero element
         targets = torch.from_numpy(targets).long()
         labels = targets[targets != 0].unique().item()
+        labels = self.map_label_to_contiguous(labels)
 
         return inputs, labels
     
+    def map_label_to_contiguous(self, label):
+        # 1,2,3,6,7 to 0,1,2,3,4
+        mapping = {1: 0, 2: 1, 3: 2, 6: 3, 7: 4}
+        return mapping.get(label, -1)  # Return -1 if label not found
+
     def get_class_name(self, label):
         pass
 

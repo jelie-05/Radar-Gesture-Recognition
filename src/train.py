@@ -101,7 +101,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
             target = batch_classes.cpu().numpy()
             pred = idx.cpu().numpy()
 
-            TP, FP, TN, FN = get_confusion_elements(target, pred, n_classes=12)
+            TP, FP, TN, FN = get_confusion_elements(target, pred, n_classes=num_classes)
             TP_sum += TP
             FP_sum += FP
             TN_sum += TN
@@ -152,7 +152,7 @@ def train_model(datadir, num_classes, in_channels, save_name, epochs, observatio
                 # recall_val += recall_score(target, pred, average='macro', zero_division=0)
                 # accuracy_val += accuracy_score(target, pred)
 
-                TP, FP, TN, FN = get_confusion_elements(target, pred, n_classes=12)
+                TP, FP, TN, FN = get_confusion_elements(target, pred, n_classes=num_classes)
                 TP_sum += TP
                 FP_sum += FP
                 TN_sum += TN

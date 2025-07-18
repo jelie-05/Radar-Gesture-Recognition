@@ -1,6 +1,7 @@
 data/*
 zz_archieve/*
 venv/*
+outputs/*
 
 ## Add these ignore rules as well
 build

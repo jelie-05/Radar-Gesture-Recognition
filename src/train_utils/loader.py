@@ -13,14 +13,14 @@ def split_dataset(dataset, split=(0.6,0.2,0.2), seed=42):
     return random_split(dataset, [train_size, val_size, test_size], 
                         generator=torch.Generator().manual_seed(seed))
 
-def custom_collate_fn(self, batch):
+def custom_collate_fn(batch):
     inputs, labels = zip(*batch)
     inputs_tensor = torch.stack(inputs, dim=0)  # Shape: (batch_size, 3, H, W)
     labels_tensor = torch.tensor(labels, dtype=torch.long)
 
     batch = {
-        'inputs': inputs_tensor,
-        'labels': labels_tensor
+        'time_proj': inputs_tensor,
+        'class': labels_tensor
     }
     return batch
 
@@ -31,7 +31,9 @@ def get_dataloaders(
         rank: int = 0,
         world_size: int = 1,
         ):
+    print("Creating dataloaders...")
     dataset = IFXRadarDataset(radar_config, root_dir=config.data.dataset_path)
+    print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}")
     train_dataset, val_dataset, test_dataset = split_dataset(dataset, seed=config.training.seed)
 
     # Samplers for distributed training
@@ -89,6 +91,7 @@ def get_dataloaders(
     else:
         test_loader = None
 
+    print(f"Train loader size: {len(train_loader)}, Validation loader size: {len(val_loader) if val_loader else 'N/A'}, Test loader size: {len(test_loader) if test_loader else 'N/A'}")
     return train_loader, val_loader, test_loader
     
 
