@@ -42,7 +42,7 @@ def dict_to_class(cls, d):
         for k, v in d.items()
     })
 
-def load_configs():
+def load_config_from_args():
     """
     Load configuration from YAML file and command line arguments.
     Returns:

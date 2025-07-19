@@ -1,4 +1,4 @@
-from src.train_utils.dataset import IFXRadarDataset
+from src.train_utils.dataset_clean import IFXRadarDataset
 from torch.utils.data import random_split, DataLoader, DistributedSampler
 import torch
 

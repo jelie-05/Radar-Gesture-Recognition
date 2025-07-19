@@ -188,7 +188,7 @@ class IFXRadarDataset(Dataset):
         self.radar_config = radar_config
         self.num_rx_antennas = radar_config['num_rx_antennas']
         self.num_beams = radar_config['num_beams']
-        self.doppler = DopplerAlgo(self.radar_config['dev_config'], 
+        self.doppler = DopplerAlgoOld(self.radar_config['dev_config'], 
                                    self.num_rx_antennas)
         
         self.dbf = DBF(self.num_rx_antennas, 

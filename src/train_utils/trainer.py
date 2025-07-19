@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from typing import Optional
+from typing import Optional, Dict
 from torch.cuda.amp import GradScaler
 import os
 from pathlib import Path
@@ -204,7 +204,7 @@ class Trainer():
         # Return final stats
         return {
             'total_epochs': self.config.training.epochs,
-            'starting_epoch': self.start_epoch,
+            'resumed_from_epoch': self.start_epoch + 1,
             'best_epoch': self.best_epoch,
             'best_metrics': self.best_metrics,
             'training_time': total_time,
@@ -454,9 +454,17 @@ class Trainer():
                 if torch.cuda.is_available():
                     cuda_mem.update(torch.cuda.max_memory_allocated(device=None) / (1024 * 1024 * 1024))
 
-                if is_main_process() and self.writer and batch_idx % 10 == 0:
-                    global_step = epoch * len(self.val_loader) + batch_idx
-                    self.writer.add_scalar("Loss/val_batch", loss.item(), global_step)
+                # Update progress bar only if main process
+                if is_main_process():
+                    monitor = {
+                        'Loss': f'{loss_meter.val:.4f} ({loss_meter.avg:.4f})',
+                        'CUDA': f'{cuda_mem.val:.2f} ({cuda_mem.avg:.2f})'
+                    }
+                    pbar.set_postfix(monitor)
+
+                # if is_main_process() and self.writer:
+                #     global_step = epoch * len(self.val_loader) + batch_idx
+                #     self.writer.add_scalar("Loss/val_batch", loss.item(), global_step)
 
                 if is_main_process():
                     pbar.set_postfix({'Loss': f'{loss_meter.val:.4f} ({loss_meter.avg:.4f})'})
@@ -492,6 +500,8 @@ class Trainer():
 
             if is_main_process():
                 world_size = get_world_size()
+
+                # Extract individual metrics    
                 all_avg_losses = gathered_metrics[0::6]
                 all_cuda_mem = gathered_metrics[1::6]
                 all_TPs = gathered_metrics[2::6]
@@ -532,16 +542,142 @@ class Trainer():
                     'recall': global_recall,
                     'accuracy': global_accuracy
                 }
-            else:
-                return {
-                    'val_loss': loss_meter.avg,
-                    'precision': precision,
-                    'recall': recall,
-                    'accuracy': accuracy
-                }
+        else:
+            return {
+                'val_loss': loss_meter.avg,
+                'precision': precision,
+                'recall': recall,
+                'accuracy': accuracy
+            }
+    
+    def save_checkpoint(self, epoch: int, is_best: bool = False, metrics: Optional[Dict[str, float]] = None) -> None:
+        """
+        Save a checkpoint of the model (only on main process).
+        
+        Args:
+            epoch: Current epoch number
+            is_best: Whether this is the best model so far
+            metrics: Dictionary of validation metrics to save
+        """
+        if not is_main_process():
+            return
             
+        # Create checkpoint directory
+        checkpoint_dir = self.output_dir / "checkpoints"
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        
+        # Get model state dict (handle DDP or DP)
+        if hasattr(self.model, 'module'):
+            model_state = self.model.module.state_dict()
+        else:
+            model_state = self.model.state_dict()
+        
+        # Create checkpoint with comprehensive information
+        checkpoint = {
+            'epoch': epoch + 1,
+            'model_state_dict': model_state,
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'best_val_loss': self.best_val_loss,
+            'best_epoch': self.best_epoch,
+            'best_metrics': self.best_metrics,
+            'config': self.config,
+            'metrics_history': self.metrics_history,
+            'use_amp': self.use_amp,
+        }
+        
+        # Add scheduler state if available
+        if self.scheduler:
+            checkpoint['scheduler_state_dict'] = self.scheduler.state_dict()
+
+        if self.use_amp and self.scaler is not None:
+            checkpoint['scaler_state_dict'] = self.scaler.state_dict()
+
+        # Add current metrics if provided
+        if metrics:
+            checkpoint['current_metrics'] = metrics
+
+        # Format checkpoint path
+        if False: ## Set to True to save all checkpoints for all epoches
+            checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
+            torch.save(checkpoint, checkpoint_path)
+        # If this is the best model, create a copy
+        if is_best:
+            best_path = checkpoint_dir / "best_model.pth"
+            torch.save(checkpoint, best_path)
+            print(f"Saved best model checkpoint to {best_path}")
+            
+            # Also save a text file with the best metrics for quick reference
+            if metrics:
+                best_metrics_path = self.output_dir / "best_metrics.txt"
+                with open(best_metrics_path, 'w') as f:
+                    f.write(f"Best model (epoch {epoch + 1}):\n")
+                    for k, v in metrics.items():
+                        f.write(f"{k}: {v}\n")
+                    f.write(f"use_amp: {self.use_amp}\n")
+        
+        # Save latest checkpoint (for easy resuming)
+        latest_path = checkpoint_dir / "latest.pth"
+        torch.save(checkpoint, latest_path)
+
     def _load_ckpt(self, checkpoint_path):
-        pass
+        """Load checkpoint and restore training state."""
+        if is_main_process():
+            print(f"Loading checkpoint from {checkpoint_path}")
+        
+        try:
+            # Load checkpoint on each device
+            checkpoint = torch.load(checkpoint_path, map_location=self.device)
+            
+            if 'config' in checkpoint:
+                loaded_config = checkpoint['config']
+                if loaded_config.experiment_name != self.config.experiment_name:
+                    if is_main_process():
+                        print(f"Warning: Experiment name mismatch!")
+                        print(f"  Checkpoint: {loaded_config.experiment_name}")
+                        print(f"  Current: {self.config.experiment_name}")
+            
+            # Load model state
+            if hasattr(self.model, 'module'):
+                # DDP model
+                self.model.module.load_state_dict(checkpoint['model_state_dict'], strict=False)
+            else:
+                self.model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+            
+            # Load optimizer and scheduler state only if training
+            if self.optimizer is not None:
+                # Load optimizer state
+                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            
+                # Load scheduler state if available
+                if 'scheduler_state_dict' in checkpoint and self.scheduler:
+                    self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
+            if self.use_amp and self.scaler is not None and 'scaler_state_dict' in checkpoint:
+                self.scaler.load_state_dict(checkpoint['scaler_state_dict'])
+                if is_main_process():
+                    print(f"Restored AMP scaler state (scale: {self.scaler.get_scale()})")
+            
+            # Load training progress
+            self.start_epoch = checkpoint.get('epoch', 0)
+            self.best_val_loss = checkpoint.get('best_val_loss', float('inf'))
+            self.best_epoch = checkpoint.get('best_epoch', 0)
+            self.best_metrics = checkpoint.get('best_metrics', {})
+            
+            # Load metrics history if available
+            if 'metrics_history' in checkpoint:
+                self.metrics_history = checkpoint['metrics_history']
+            
+            if is_main_process():
+                print(f"Resumed from epoch {self.start_epoch}")
+                print(f"Best validation mIoU so far: {self.best_miou:.4f} (epoch {self.best_epoch + 1})")
+                amp_status = "Enabled" if self.use_amp else "Disabled"
+                print(f"Mixed Precision: {amp_status}")
+
+        except Exception as e:
+            if is_main_process():
+                print(f"Error loading checkpoint: {e}")
+                print("Starting training from scratch...")
+            self.start_epoch = 0
 
     def save_run_config(self, config):
 
