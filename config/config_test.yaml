@@ -1,8 +1,8 @@
 experiment_name: "radargesture"
 training:
   batch_size: 32
-  epochs: 100
-  run_id: "250718_01"
+  epochs: 2
+  run_id: "test"
   use_amp: true
   gradient_clip: 1.0
   seed: 1
@@ -14,7 +14,7 @@ training:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
-  dataset_path: '/home/swadiryus/projects/dataset_debug/'
+  dataset_path: '/home/phd_li/dataset/radar_gesture_dataset/fulldataset/'
   input_channels: 3
   output_classes: 5
   pin_memory: false
