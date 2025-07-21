@@ -74,3 +74,9 @@ class DebouncerTime:
             return self.dtm_memory, self.rtm_memory, self.atm_memory
         else:
             return self.dtm_memory, self.rtm_memory
+
+    def reset(self):
+        self.dtm_memory = []
+        self.rtm_memory = []
+        self.atm_memory = []
+        self.detection_memory = []

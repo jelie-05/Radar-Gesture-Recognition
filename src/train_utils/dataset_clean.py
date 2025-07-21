@@ -8,7 +8,6 @@ import os
 
 from src.utils.DBF import DBF
 from src.utils.doppler import DopplerAlgo
-from src.AvianRDKWrapper.ifxRadarSDK import *
 from src.utils.common import do_inference_processing, do_inference_processing_RAM
 from src.utils.debouncer_time import DebouncerTime
 
@@ -22,6 +21,9 @@ class IFXRadarDataset(Dataset):
 
         for i in range(len(self.file_paths)):
             data = np.load(self.file_paths[i], mmap_mode='r')
+
+            if i == 0:
+                frames_shape = data['inputs'].shape[0]
             length = len(data['inputs'])
             self.idx_mapping.extend([(i, j) for j in range(length)])
 
@@ -37,7 +39,7 @@ class IFXRadarDataset(Dataset):
         self.dbf = DBF(self.num_rx_antennas, 
                        num_beams = self.num_beams, 
                        max_angle_degrees = radar_config['max_angle_degrees'])
-
+        
     def __len__(self):
         return len(self.idx_mapping)
     
@@ -59,17 +61,19 @@ class IFXRadarDataset(Dataset):
         targets = data['targets'][local_idx]    # TODO: consider how to use targets
 
         # Process the frames to get RTM, DTM, and ATM
-        self.debouncer = DebouncerTime(memory_length=frames.shape[0])
+        rtm_list, dtm_list, atm_list = [], [], []
         for i in range(frames.shape[0]):
             rtm, dtm, atm = self.project_to_time(frames[i])
+            rtm_list.append(rtm)
+            dtm_list.append(dtm)
+            atm_list.append(atm)
 
-        rtm = torch.cat(rtm, dim=1)
-        dtm = torch.cat(dtm, dim=1)
-        atm = torch.stack(atm, dim=1) if atm is not None else None
+        rtm = torch.cat(rtm_list, dim=1)
+        dtm = torch.cat(dtm_list, dim=1)
+        atm = torch.stack(atm_list, dim=1) 
         inputs = torch.stack([rtm, dtm, atm], dim=0)  # Shape: (3, H, W)
 
         # Process targets into labels
-        # take the non zero element
         targets = torch.from_numpy(targets).long()
         labels = targets[targets != 0].unique().item()
         labels = self.map_label_to_contiguous(labels)
@@ -113,7 +117,16 @@ class IFXRadarDataset(Dataset):
         beam_range_energy = scale*(beam_range_energy/max_energy - 1)
         range_angle = do_inference_processing_RAM(beam_range_energy)
 
-        self.debouncer.add_scan(range_doppler, range_angle)
-        rtm, dtm, atm = self.debouncer.get_scans()
+        # Transform into time
+        processed_range_doppler = range_doppler[0, 0, :, :]
+        max_value = processed_range_doppler.max()
+        h, w = (processed_range_doppler == max_value).nonzero(as_tuple=True)
+        h, w = h[0], w[0]
+
+        rtm = processed_range_doppler[:, w].unsqueeze(1)  # Range-Time Map
+        dtm = processed_range_doppler[h, :].unsqueeze(1)
+
+        atm = range_angle.max(axis=1).values  # Angle-Time Map
+        
 
         return rtm, dtm, atm

@@ -14,7 +14,7 @@ training:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
-  dataset_path: '/home/phd_li/dataset/radar_gesture_dataset/fulldataset/'
+  dataset_path: '/home/phd_li/jeremy/dataset/'
   input_channels: 3
   output_classes: 5
   pin_memory: false

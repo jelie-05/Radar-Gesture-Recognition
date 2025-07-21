@@ -200,6 +200,8 @@ def main():
             world_size=world_size
         )
 
+        print(f"Dataloader is loaded successfully!")
+
         # Create and run Trainer
         trainer = Trainer(
             model=model,

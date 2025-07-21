@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torchvision import transforms
-from src.AvianRDKWrapper.ifxRadarSDK import *
 from sklearn.preprocessing import MinMaxScaler, normalize
 from cv2 import resize, INTER_AREA
 
@@ -72,24 +71,3 @@ class VideoTransform(object):
             rescaled_video[l, :, :, :] = frame
 
         return rescaled_video
-
-
-def configure_device(device: Device, num_receivers: int):
-    rx_mask = (1 << num_receivers) - 1
-
-    metric = {
-        'sample_rate_Hz': 2500000,
-        'range_resolution_m': 0.025,
-        'max_range_m': 1,
-        'max_speed_m_s': 3,
-        'speed_resolution_m_s': 0.024,
-        'frame_repetition_time_s': 1 / 9.5,
-        'center_frequency_Hz': 60_750_000_000,
-        'rx_mask': rx_mask,
-        'tx_mask': 1,
-        'tx_power_level': 31,
-        'if_gain_dB': 25,
-    }
-
-    cfg = device.metrics_to_config(**metric)
-    device.set_config(**cfg)
