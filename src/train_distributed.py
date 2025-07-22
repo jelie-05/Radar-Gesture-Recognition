@@ -46,6 +46,7 @@ def main():
     
     # Setup distributed training
     device, rank, world_size, local_rank = setup_distributed()
+    print(f"Training Device Setup: dev: {device}; rank: {rank}; world size: {world_size}; local rank: {local_rank}")
 
     # Rewrite dev config as dictionary
     dev_config = {
@@ -168,7 +169,7 @@ def main():
                 print(f"Run ID: {run_id}")                
 
         # Create model
-        model = SimpleCNN(in_channels=config.data.input_channels, num_classes=config.data.output_classes)
+        model = SimpleCNN(in_channels=config.data.input_channels, num_classes=config.data.output_classes).to(device=device)
         
         # Print model summary if main process
         if is_main_process():
@@ -192,6 +193,7 @@ def main():
                 print("Model wrapped with DistributedDataParallel")
 
         # Create dataloaders
+        print("=================================================================================")
         train_loader, val_loader, _ = get_dataloaders(
             config,
             radar_config=radar_config,  # Assuming radar_config is part of data config
@@ -203,6 +205,8 @@ def main():
         print(f"Dataloader is loaded successfully!")
 
         # Create and run Trainer
+        print("=================================================================================")
+        print("Training starts...")
         trainer = Trainer(
             model=model,
             config=config,

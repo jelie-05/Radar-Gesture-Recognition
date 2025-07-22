@@ -20,8 +20,9 @@ class IFXRadarDataset(Dataset):
         self.cache_size = cache_size
 
         for i in range(len(self.file_paths)):
-            data = np.load(self.file_paths[i], mmap_mode='r')
-            length = len(data['inputs'])
+            with np.load(self.file_paths[i], mmap_mode='r') as data:
+                shape = data['inputs'].shape
+                length = shape[0]
             self.idx_mapping.extend([(i, j) for j in range(length)])
 
         self._cache = OrderedDict()
@@ -44,18 +45,9 @@ class IFXRadarDataset(Dataset):
         file_idx, local_idx = self.idx_mapping[idx]
         file_path = self.file_paths[file_idx]
 
-        if file_idx in self._cache:
-            data = self._cache[file_idx]
-            self._cache.move_to_end(file_idx)
-        else:
-            data = np.load(file_path, mmap_mode='r')
-            self._cache[file_idx] = data
-            self._cache.move_to_end(file_idx)
-            if len(self._cache) > self.cache_size:
-                self._cache.popitem(last=False)
-
-        frames = data['inputs'][local_idx]  # Frame data
-        targets = data['targets'][local_idx]    # TODO: consider how to use targets
+        with np.load(file_path, mmap_mode='r') as data:
+            frames = data['inputs'][local_idx]  # Frame data
+            targets = data['targets'][local_idx]    # TODO: consider how to use targets
 
         # Process the frames to get RTM, DTM, and ATM
         rtm_list, dtm_list, atm_list = [], [], []

@@ -9,7 +9,7 @@ def parse_args():
     
     # Add arguments for model configuration
     parser.add_argument('--config', type=str, help='Path to the configuration file', required=True)
-    parser.add_argument('--local_rank', default=-1, type=int, help='Local rank for distributed training')
+    parser.add_argument('--local-rank', default=-1, type=int, help='Local rank for distributed training')
 
     # Add arguments for training configuration
     parser.add_argument('--batch_size', type=int, help='Batch size for training')

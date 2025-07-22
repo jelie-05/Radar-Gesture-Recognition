@@ -14,11 +14,11 @@ training:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
-  dataset_path: '/home/swadiryus/projects/dataset_debug/'
+  dataset_path: '/home/swadiryus/projects/dataset/radar_gesture_dataset/'
   input_channels: 3
   output_classes: 5
   pin_memory: false
-  num_workers: 1
+  num_workers: 0
   persistent_workers: true
-  prefetch_factor: 4
+  prefetch_factor: none
   drop_last: true

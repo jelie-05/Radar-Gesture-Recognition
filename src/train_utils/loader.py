@@ -31,9 +31,9 @@ def get_dataloaders(
         rank: int = 0,
         world_size: int = 1,
         ):
-    print("Creating dataloaders...")
+    print("Initializing Dataset...")
     dataset = IFXRadarDataset(radar_config, root_dir=config.data.dataset_path)
-    print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}\n")
+    print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}")
     train_dataset, val_dataset, test_dataset = split_dataset(dataset, seed=config.training.seed)
 
     # Samplers for distributed training
@@ -46,6 +46,7 @@ def get_dataloaders(
         val_sampler = None
         test_sampler = None
 
+    print("Creating dataloaders...")
     train_loader = DataLoader(
         train_dataset,
         batch_size=config.training.batch_size,
