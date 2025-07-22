@@ -12,6 +12,7 @@ import time
 from tqdm import tqdm
 from torch.cuda.amp import autocast
 from src.train_utils.utils import AverageMeter, get_confusion_elements
+import torch.distributed as dist
 
 from src.train_utils.distributed import (
     is_distributed, 
@@ -78,11 +79,15 @@ class Trainer():
                 print("Warning: AMP enabled but CUDA not available, falling back to FP32")
 
         # Create base experiment directory (only on main process)
+        self.experiment_dir = Path(f"{os.getcwd()}/outputs/{config.experiment_name}")
+        print(f"Experiment directory: {self.experiment_dir}")
+
         if is_main_process():
-            self.experiment_dir = Path(f"outputs/{config.experiment_name}")
             os.makedirs(self.experiment_dir, exist_ok=True)
-        else:
-            self.experiment_dir = Path(f"outputs/{config.experiment_name}")
+            print(f"Experiment directory created at {self.experiment_dir}")
+        
+        if dist.is_initialized():
+            dist.barrier()  # Ensure all processes see the same directory structure
 
         # Resume or initialize training
         self.start_epoch = 0

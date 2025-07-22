@@ -33,7 +33,7 @@ def get_dataloaders(
         ):
     print("Creating dataloaders...")
     dataset = IFXRadarDataset(radar_config, root_dir=config.data.dataset_path)
-    print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}")
+    print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}\n")
     train_dataset, val_dataset, test_dataset = split_dataset(dataset, seed=config.training.seed)
 
     # Samplers for distributed training
@@ -91,7 +91,7 @@ def get_dataloaders(
     else:
         test_loader = None
 
-    print(f"Train loader size: {len(train_loader)}, Validation loader size: {len(val_loader) if val_loader else 'N/A'}, Test loader size: {len(test_loader) if test_loader else 'N/A'}")
+    print(f"Train loader size: {len(train_loader)}, \n Validation loader size: {len(val_loader) if val_loader else 'N/A'}, \n Test loader size: {len(test_loader) if test_loader else 'N/A'}")
     return train_loader, val_loader, test_loader
     
 

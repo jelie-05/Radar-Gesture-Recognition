@@ -21,9 +21,6 @@ class IFXRadarDataset(Dataset):
 
         for i in range(len(self.file_paths)):
             data = np.load(self.file_paths[i], mmap_mode='r')
-
-            if i == 0:
-                frames_shape = data['inputs'].shape[0]
             length = len(data['inputs'])
             self.idx_mapping.extend([(i, j) for j in range(length)])
 
@@ -64,7 +61,7 @@ class IFXRadarDataset(Dataset):
         rtm_list, dtm_list, atm_list = [], [], []
         for i in range(frames.shape[0]):
             rtm, dtm, atm = self.project_to_time(frames[i])
-            rtm_list.append(rtm)
+            rtm_list.append(rtm) 
             dtm_list.append(dtm)
             atm_list.append(atm)
 
