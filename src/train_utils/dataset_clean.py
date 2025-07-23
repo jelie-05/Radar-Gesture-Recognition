@@ -1,15 +1,14 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import torch
 import glob
 import numpy as np
-import pandas as pd
 from collections import OrderedDict
 import os
+import math
+from src.utils.DBF_torch import DBFTorch as DBF
+from src.utils.doppler_torch import DopplerAlgoTorch as DopplerAlgo
+import torch.nn.functional as F
 
-from src.utils.DBF import DBF
-from src.utils.doppler import DopplerAlgo
-from src.utils.common import do_inference_processing, do_inference_processing_RAM
-from src.utils.debouncer_time import DebouncerTime
 
 
 class IFXRadarDataset(Dataset):
@@ -48,6 +47,7 @@ class IFXRadarDataset(Dataset):
     def __getitem__(self, idx):
         file_idx, local_idx = self.idx_mapping[idx]
         data = self._get_data(file_idx)
+        self.doppler.mti_history.zero_()
 
         frames = data['inputs'][local_idx]
         targets = data['targets'][local_idx]
@@ -72,36 +72,101 @@ class IFXRadarDataset(Dataset):
     def map_label_to_contiguous(self, label):
         mapping = {1: 0, 2: 1, 3: 2, 6: 3, 7: 4}
         return mapping.get(label, -1)
+    
+    def get_class_name(self, label):
+        pass
 
-    def project_to_time(self, frame):
-        data_all_antennas = []
-        for i in range(self.num_rx_antennas):
-            dfft_dbfs = self.doppler.compute_doppler_map(frame[i], i)
-            data_all_antennas.append(dfft_dbfs)
+    def get_mapping(self):
+        pass
 
-        range_doppler = do_inference_processing(data_all_antennas)
+    def project_to_time(self, frame: torch.Tensor):
+        assert frame.shape[0] == self.num_rx_antennas, "Mismatch in antenna count"
+        device = frame.device
 
-        data_np = np.stack(data_all_antennas, axis=0).transpose(1, 2, 0)
-        beam_formed = self.dbf.run(data_np)
+        # Batched Doppler processing → (N_ant, N_range, N_doppler)
+        doppler_maps = self.doppler.compute_doppler_map(frame.to(torch.float32))
 
-        num_samples = data_np.shape[0]
-        beam_range_energy = np.zeros((num_samples, self.num_beams))
-        for i in range(self.num_beams):
-            doppler_i = beam_formed[:, :, i]
-            beam_range_energy[:, i] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
+        # Transpose to (N_range, N_doppler, N_antennas)
+        doppler_maps_for_dbf = doppler_maps.permute(1, 2, 0).contiguous()
 
-        scale = 150
-        beam_range_energy = scale * (beam_range_energy / beam_range_energy.max() - 1)
-        range_angle = do_inference_processing_RAM(beam_range_energy)
+        # Apply Digital Beamforming → (N_range, N_doppler, N_beams)
+        beam_formed = self.dbf.run(doppler_maps_for_dbf)
 
-        # Transform into time
-        processed_range_doppler = range_doppler[0, 0, :, :]
+        # Compute energy over Doppler axis
+        beam_range_energy = torch.linalg.norm(beam_formed, dim=1) / math.sqrt(self.num_beams)  # (N_range, N_beams)
+
+        # Scale and normalize
+        scale = 150.0
+        beam_range_energy = beam_range_energy / (beam_range_energy.max() + 1e-6)
+        beam_range_energy = scale * (beam_range_energy - 1.0)  # shape: (N_range, N_beams)
+
+        # Range-Angle Map processing (→ 32x32)
+        range_angle = self.do_inference_processing_RAM(beam_range_energy)  # shape: (32, 32)
+
+        # Range-Doppler preprocessing
+        # Convert Doppler maps to (C, H, W)
+        range_doppler_input = doppler_maps  # (N_ant, N_range, N_doppler) → (C, H, W)
+        range_doppler = self.do_inference_processing(range_doppler_input)  # (1, C, 32, 32)
+
+        # Extract max activation point in processed RD map
+        processed_range_doppler = range_doppler[0].abs().sum(dim=0)  # shape: (32, 32)
         max_value = processed_range_doppler.max()
         h, w = (processed_range_doppler == max_value).nonzero(as_tuple=True)
         h, w = h[0], w[0]
 
-        rtm = processed_range_doppler[:, w].unsqueeze(1)  # Range-Time Map
-        dtm = processed_range_doppler[h, :].unsqueeze(1)
+        # Step 9: Range-Time and Doppler-Time Maps
+        rtm = processed_range_doppler[:, w].unsqueeze(1)  # (32, 1)
+        dtm = processed_range_doppler[h, :].unsqueeze(1)  # (32, 1)
 
-        atm = range_angle.max(axis=1).values  # Angle-Time Map
+        # Step 10: Angle-Time Map (max over range axis)
+        atm = range_angle.max(dim=0).values  # (32,)
+
         return rtm, dtm, atm
+    def normalize_tensor_per_channel(self, x: torch.Tensor, eps=1e-6):
+        """
+        Normalize tensor per-channel to [0, 1] along HxW.
+        Input shape: (C, H, W)
+        """
+        min_val = x.view(x.shape[0], -1).min(dim=1)[0].view(-1, 1, 1)
+        max_val = x.view(x.shape[0], -1).max(dim=1)[0].view(-1, 1, 1)
+        return (x - min_val) / (max_val - min_val + eps)
+
+
+    def do_inference_processing(self,range_doppler: torch.Tensor, size=(32, 32)) -> torch.Tensor:
+        """
+        Normalize, resize, and return Range-Doppler tensor.
+        Input:  Tensor of shape (C, H, W) or (H, W, C) as float32 or complex64
+        Output: Tensor of shape (1, C, size[0], size[1]) (batch-like)
+        """
+        if range_doppler.ndim == 3 and range_doppler.shape[0] not in [1, 2, 3, 4, 8]:
+            # Convert (H, W, C) → (C, H, W)
+            range_doppler = range_doppler.permute(2, 0, 1)
+
+        if torch.is_complex(range_doppler):
+            range_doppler = range_doppler.abs()
+
+        range_doppler = self.normalize_tensor_per_channel(range_doppler)
+
+        # Resize to (C, 32, 32)
+        range_doppler = F.interpolate(range_doppler.unsqueeze(0), size=size, mode='area')
+        return range_doppler  # shape: (1, C, 32, 32)
+
+
+    def do_inference_processing_RAM(self,range_angle: torch.Tensor, size=(32, 32)) -> torch.Tensor:
+        """
+        Normalize, resize, and return Range-Angle tensor.
+        Input:  Tensor of shape (H, W)
+        Output: Tensor of shape (H', W') = (32, 32)
+        """
+        if torch.is_complex(range_angle):
+            range_angle = range_angle.abs()
+
+        # Normalize to [0, 1]
+        min_val = range_angle.min()
+        max_val = range_angle.max()
+        range_angle = (range_angle - min_val) / (max_val - min_val + 1e-6)
+
+        # Resize to (1, 1, 32, 32)
+        range_angle = F.interpolate(range_angle.unsqueeze(0).unsqueeze(0), size=size, mode='area')
+
+        return range_angle.squeeze(0).squeeze(0)  # shape: (32, 32)
