@@ -27,7 +27,7 @@ def split_npz(npz_path, output_dir, chunk_size=1000):
         inputs_chunk = inputs[start:end]
         targets_chunk = targets[start:end]
 
-        out_path = os.path.join(output_dir, f"{base_name}_part{i:03d}.npz")
+        out_path = os.path.join(output_dir, f"{base_name}_sample_{i:05d}.npz")
         np.savez(out_path, inputs=inputs_chunk, targets=targets_chunk)
 
         print(f"Saved {out_path} with {end - start} samples")
@@ -44,5 +44,5 @@ if __name__ == "__main__":
 
     npz_path = '/home/swadiryus/projects/dataset/radar_gesture_dataset/user1_e1.npz'
     output_dir = '/home/swadiryus/projects/dataset/chunks/'
-    chunk_size = 500
+    chunk_size = 1
     split_npz(npz_path, output_dir, chunk_size)
