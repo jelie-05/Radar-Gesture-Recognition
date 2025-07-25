@@ -10,11 +10,18 @@ from src.utils.doppler_torch import DopplerAlgoTorch as DopplerAlgo
 import torch.nn.functional as F
 
 
+
 class IFXRadarDataset(Dataset):
-    def __init__(self, radar_config, input_dir='data/inputs', target_dir='data/targets'):
-        self.input_paths = sorted(glob.glob(os.path.join(input_dir, '*.npy')))
-        self.target_paths = sorted(glob.glob(os.path.join(target_dir, '*.npy')))
-        assert len(self.input_paths) == len(self.target_paths), "Mismatch in number of input and target files"
+    def __init__(self, radar_config, file_paths=None, root_dir='data/recording', cache_size=3):
+        self.file_paths = file_paths or glob.glob(os.path.join(root_dir, '*.npz'))
+        self.cache_size = cache_size
+        self._cache = OrderedDict()
+        self.idx_mapping = []
+
+        for file_idx, path in enumerate(self.file_paths):
+            with np.load(path, mmap_mode='r') as data:
+                length = len(data['inputs'])
+            self.idx_mapping.extend([(file_idx, local_idx) for local_idx in range(length)])
 
         self.radar_config = radar_config
         self.num_rx_antennas = radar_config['num_rx_antennas']
@@ -24,13 +31,26 @@ class IFXRadarDataset(Dataset):
         self.dbf = DBF(self.num_rx_antennas, self.num_beams, radar_config['max_angle_degrees'])
 
     def __len__(self):
-        return len(self.input_paths)
+        return len(self.idx_mapping)
+
+    def _get_data(self, file_idx):
+        if file_idx in self._cache:
+            return self._cache[file_idx]
+        
+        if len(self._cache) >= self.cache_size:
+            self._cache.popitem(last=False)
+
+        data = np.load(self.file_paths[file_idx], mmap_mode='r')
+        self._cache[file_idx] = data
+        return data
 
     def __getitem__(self, idx):
-        frames = np.load(self.input_paths[idx], mmap_mode='r')  # [num_frames, n_antennas, chirps, samples]
-        targets = np.load(self.target_paths[idx], mmap_mode='r')
-
+        file_idx, local_idx = self.idx_mapping[idx]
+        data = self._get_data(file_idx)
         self.doppler.mti_history.zero_()
+
+        frames = data['inputs'][local_idx]
+        targets = data['targets'][local_idx]
 
         rtm_list, dtm_list, atm_list = [], [], []
         for i in range(frames.shape[0]):
@@ -102,7 +122,6 @@ class IFXRadarDataset(Dataset):
         atm = range_angle.max(dim=0).values  # (32,)
 
         return rtm, dtm, atm
-    
     def normalize_tensor_per_channel(self, x: torch.Tensor, eps=1e-6):
         """
         Normalize tensor per-channel to [0, 1] along HxW.
@@ -111,6 +130,7 @@ class IFXRadarDataset(Dataset):
         min_val = x.view(x.shape[0], -1).min(dim=1)[0].view(-1, 1, 1)
         max_val = x.view(x.shape[0], -1).max(dim=1)[0].view(-1, 1, 1)
         return (x - min_val) / (max_val - min_val + eps)
+
 
     def do_inference_processing(self,range_doppler: torch.Tensor, size=(32, 32)) -> torch.Tensor:
         """
