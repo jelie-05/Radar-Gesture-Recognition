@@ -47,6 +47,7 @@ class IFXRadarDataset(Dataset):
 
         # Faster label mapping
         label = self.map_label_to_contiguous(np.max(targets))
+
         return inputs, label
 
     def map_label_to_contiguous(self, label):
@@ -61,7 +62,6 @@ class IFXRadarDataset(Dataset):
 
     def project_to_time(self, frame: torch.Tensor):
         assert frame.shape[0] == self.num_rx_antennas, "Mismatch in antenna count"
-        device = frame.device
 
         # Batched Doppler processing → (N_ant, N_range, N_doppler)
         doppler_maps = self.doppler.compute_doppler_map(frame.to(torch.float32))

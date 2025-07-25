@@ -247,6 +247,7 @@ class Trainer():
             inputs = batch['time_proj'].to(self.device)
             labels = batch['class'].to(self.device)
 
+            process_start = time.time()
             self.optimizer.zero_grad()
 
             if self.use_amp and self.scaler is not None:

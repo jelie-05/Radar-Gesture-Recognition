@@ -13,7 +13,7 @@ class DopplerAlgoTorch:
 
         # Create true Blackman-Harris window
         self.range_window = self.blackmanharris_window(self.num_samples_per_chirp).view(1, 1, -1)  # (1, 1, N_samples)
-        self.doppler_window = self.blackmanharris_window(self.num_chirps_per_frame).view(1, -1, 1)  # (1, N_chirps, 1)
+        self.doppler_window = self.blackmanharris_window(self.num_chirps_per_frame).view(1, 1, -1)  # (1, 1, N_chirps)
 
         # MTI history buffer (stateful)
         self.mti_history = torch.zeros(

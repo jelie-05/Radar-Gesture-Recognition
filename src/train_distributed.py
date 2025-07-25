@@ -199,7 +199,8 @@ def main():
             radar_config=radar_config,  # Assuming radar_config is part of data config
             distributed=(world_size > 1),
             rank=rank,
-            world_size=world_size
+            world_size=world_size,
+            device=device
         )
 
         print(f"Dataloader is loaded successfully!")

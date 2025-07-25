@@ -33,21 +33,21 @@ class DBFTorch:
 
         self.weights = weights  # shape: (num_antennas, num_beams)
 
-        def run(self, range_doppler: torch.Tensor) -> torch.Tensor:
-            """
-            Apply beamforming to range-doppler data
+    def run(self, range_doppler: torch.Tensor) -> torch.Tensor:
+        """
+        Apply beamforming to range-doppler data
 
-            Args:
-                range_doppler: (num_samples, num_chirps, num_antennas) 
+        Args:
+            range_doppler: (num_samples, num_chirps, num_antennas) 
 
-            Returns:
-                beamformed_rdm: (num_samples, num_chirps, num_beams) 
-            """
-            assert range_doppler.shape[-1] == self.num_antennas
-            if not torch.is_complex(range_doppler):
-                raise ValueError("Input to DBF must be complex tensor")
+        Returns:
+            beamformed_rdm: (num_samples, num_chirps, num_beams) 
+        """
+        assert range_doppler.shape[-1] == self.num_antennas
+        if not torch.is_complex(range_doppler):
+            raise ValueError("Input to DBF must be complex tensor")
 
-            # Vectorized beamforming:
-            # sum over antennas: output[n, c, b] = sum_a (X[n, c, a] * W[a, b])
-            beamformed = torch.einsum('nca,ab->ncb', range_doppler, self.weights)
-            return beamformed
+        # Vectorized beamforming:
+        # sum over antennas: output[n, c, b] = sum_a (X[n, c, a] * W[a, b])
+        beamformed = torch.einsum('nca,ab->ncb', range_doppler, self.weights)
+        return beamformed

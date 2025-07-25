@@ -30,6 +30,7 @@ def get_dataloaders(
         distributed: bool = False,
         rank: int = 0,
         world_size: int = 1,
+        device: str = 'cpu'
         ):
     print("Initializing Dataset...")
     dataset = IFXRadarDataset(radar_config, root_dir=config.data.dataset_path)
