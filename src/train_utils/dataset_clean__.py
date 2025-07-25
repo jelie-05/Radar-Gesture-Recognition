@@ -13,7 +13,7 @@ from src.utils.debouncer_time import DebouncerTime
 
 
 class IFXRadarDataset(Dataset):
-    def __init__(self, radar_config, file_paths=None, root_dir='data/recording', cache_size=3):
+    def __init__(self, radar_config, file_paths=None, root_dir='data/recording', cache_size=3, device='cpu'):
         self.file_paths = file_paths or glob.glob(os.path.join(root_dir, '*.npz'))
         self.cache_size = cache_size
         self._cache = OrderedDict()

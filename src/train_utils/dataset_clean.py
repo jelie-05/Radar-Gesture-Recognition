@@ -8,11 +8,11 @@ import math
 from src.utils.DBF_torch import DBFTorch as DBF
 from src.utils.doppler_torch import DopplerAlgoTorch as DopplerAlgo
 import torch.nn.functional as F
-
+import time
 
 
 class IFXRadarDataset(Dataset):
-    def __init__(self, radar_config, file_paths=None, root_dir='data/recording', cache_size=3):
+    def __init__(self, radar_config, file_paths=None, root_dir='data/recording', cache_size=50):
         self.file_paths = file_paths or glob.glob(os.path.join(root_dir, '*.npz'))
         self.cache_size = cache_size
         self._cache = OrderedDict()
@@ -35,23 +35,36 @@ class IFXRadarDataset(Dataset):
 
     def _get_data(self, file_idx):
         if file_idx in self._cache:
+            print(f"Opening from cache: {file_idx}")
             return self._cache[file_idx]
         
         if len(self._cache) >= self.cache_size:
             self._cache.popitem(last=False)
 
+        print(f"Loading file: {self.file_paths[file_idx]}")
         data = np.load(self.file_paths[file_idx], mmap_mode='r')
         self._cache[file_idx] = data
         return data
 
     def __getitem__(self, idx):
+        start_open = time.time()
         file_idx, local_idx = self.idx_mapping[idx]
         data = self._get_data(file_idx)
+        end_open = time.time()
+        print(f"Opening file took: {end_open - start_open:.4f} seconds")
+
+        start_access = time.time()
         self.doppler.mti_history.zero_()
 
         frames = data['inputs'][local_idx]
+        if not isinstance(frames, torch.Tensor):
+            frames = torch.tensor(frames, dtype=torch.float32)
         targets = data['targets'][local_idx]
 
+        end_access = time.time()
+        print(f"Accessing data took: {end_access - start_access:.4f} seconds")
+
+        radar_process = time.time()
         rtm_list, dtm_list, atm_list = [], [], []
         for i in range(frames.shape[0]):
             rtm, dtm, atm = self.project_to_time(frames[i])
@@ -64,9 +77,14 @@ class IFXRadarDataset(Dataset):
         atm = torch.stack(atm_list, dim=1)
 
         inputs = torch.stack([rtm, dtm, atm], dim=0) # Shape: (3, H, W)
+        radar_process_end = time.time()
+        print(f"Radar processing took: {radar_process_end - radar_process:.4f} seconds")
 
         # Faster label mapping
+        label_start = time.time()
         label = self.map_label_to_contiguous(np.max(targets))
+        label_end = time.time()
+        print(f"Label mapping took: {label_end - label_start:.4f} seconds")
         return inputs, label
 
     def map_label_to_contiguous(self, label):
@@ -81,7 +99,6 @@ class IFXRadarDataset(Dataset):
 
     def project_to_time(self, frame: torch.Tensor):
         assert frame.shape[0] == self.num_rx_antennas, "Mismatch in antenna count"
-        device = frame.device
 
         # Batched Doppler processing → (N_ant, N_range, N_doppler)
         doppler_maps = self.doppler.compute_doppler_map(frame.to(torch.float32))
