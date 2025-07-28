@@ -40,17 +40,17 @@ class DopplerAlgoTorch:
         Output: doppler_map shape (N_antennas, N_samples, N_doppler_bins)
         """
 
-        # Step 1: Remove average
+        # Remove average
         data = data - data.mean(dim=(1, 2), keepdim=True)
 
-        # Step 2: MTI filtering
+        # MTI filtering
         data_mti = data - self.mti_history
         self.mti_history = self.mti_alpha * data + (1 - self.mti_alpha) * self.mti_history
 
-        # Step 3: FFT over sample axis (range FFT)
+        # FFT over sample axis (range FFT)
         fft1d = self.fft_spectrum(data_mti)
 
-        # Step 4: Doppler processing (FFT over chirps)
+        # Doppler processing (FFT over chirps)
         fft1d = fft1d.transpose(1, 2)  # shape: (N_ant, N_samples, N_chirps)
 
         fft1d = fft1d * self.doppler_window.to(fft1d.device)

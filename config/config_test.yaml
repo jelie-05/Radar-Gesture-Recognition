@@ -1,9 +1,9 @@
 experiment_name: "radargesture"
 training:
-  batch_size: 32
+  batch_size: 2048
   epochs: 2
   run_id: "test"
-  use_amp: true
+  use_amp: false
   gradient_clip: 1.0
   seed: 1
   optimizer: 
@@ -14,7 +14,7 @@ training:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
-  dataset_path: '/home/phd_li/jeremy/dataset/'
+  dataset_path: '/home/phd_li/jeremy/dataset_npy/'
   input_channels: 3
   output_classes: 5
   pin_memory: false

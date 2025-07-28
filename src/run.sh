@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_GPUS=4
+NUM_GPUS=2
 CONFIG="config/config_test.yaml"
 
 export PYTHONPATH=$(pwd)

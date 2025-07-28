@@ -8,7 +8,7 @@ import math
 from src.utils.DBF_torch import DBFTorch as DBF
 from src.utils.doppler_torch import DopplerAlgoTorch as DopplerAlgo
 import torch.nn.functional as F
-
+import matplotlib.pyplot as plt
 
 
 class IFXRadarDataset(Dataset):
@@ -52,6 +52,9 @@ class IFXRadarDataset(Dataset):
         frames = data['inputs'][local_idx]
         targets = data['targets'][local_idx]
 
+        frames = torch.from_numpy(frames).float()  # Convert to float tensor
+        targets = torch.from_numpy(targets).float()  # Convert to float tensor
+
         rtm_list, dtm_list, atm_list = [], [], []
         for i in range(frames.shape[0]):
             rtm, dtm, atm = self.project_to_time(frames[i])
@@ -84,7 +87,7 @@ class IFXRadarDataset(Dataset):
         device = frame.device
 
         # Batched Doppler processing → (N_ant, N_range, N_doppler)
-        doppler_maps = self.doppler.compute_doppler_map(frame.to(torch.float32))
+        doppler_maps = self.doppler.compute_doppler_map(frame)
 
         # Transpose to (N_range, N_doppler, N_antennas)
         doppler_maps_for_dbf = doppler_maps.permute(1, 2, 0).contiguous()

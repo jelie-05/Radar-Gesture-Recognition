@@ -161,7 +161,10 @@ def main():
         # Print configuration if main process
         if is_main_process():
             print("Starting Training...")
-            print(f"Distributed training: {world_size} GPU(s), rank {rank}")
+            if device.type == 'cuda':
+                print(f"Distributed training: {world_size} GPU(s), rank {rank}")
+            else:
+                print("Training on CPU")
             if resume_training or resume_from:
                 print(f"Resuming training from: {resume_from or 'latest checkpoint'}")
                 print(f"Using original configuration from checkpoint")
