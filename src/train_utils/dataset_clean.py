@@ -2,15 +2,15 @@ from torch.utils.data import Dataset
 import torch
 import glob
 import numpy as np
-from collections import OrderedDict
+import json
 import os
 import math
-from src.utils.DBF_torch import DBFTorch as DBF
-from src.utils.doppler_torch import DopplerAlgoTorch as DopplerAlgo
+from src.utils.DBF import DBF
+from src.utils.doppler import DopplerAlgo
 import torch.nn.functional as F
 
 
-class IFXRadarDataset(Dataset):
+class IFXRadarDatasetRaw(Dataset):
     def __init__(self, radar_config, root_dir='data/inputs', observation_length=30):
         input_dir = os.path.join(root_dir, 'inputs')
         target_dir = os.path.join(root_dir, 'targets')
@@ -188,3 +188,29 @@ class IFXRadarDataset(Dataset):
         range_angle = F.interpolate(range_angle.unsqueeze(0).unsqueeze(0), size=size, mode='area')
 
         return range_angle.squeeze(0).squeeze(0)  # shape: (32, 32)
+    
+
+class IFXRadarDataset(Dataset):
+    def __init__(self, datadir):
+        self.datadir = datadir
+        input_dir = os.path.join(datadir, 'inputs/')
+        self.input_paths = sorted(glob.glob(os.path.join(input_dir, '*.npy')))
+
+        with open(f'{datadir}/labels_mapping.json', 'r') as f:
+            self.labels_mapping = json.load(f)
+
+    def __len__(self):
+        return len(self.input_paths)
+    
+    def __getitem__(self, idx):
+        filename = self.input_paths[idx]
+        frames = np.load(filename)  # [num_frames: observation length, n_antennas, chirps, samples]
+        label = self.extract_idx(filename)
+
+        return frames, label
+
+    def extract_idx(self, filename):
+        name_no_ext = filename.replace('.npy', '')
+        label_str = name_no_ext.split('_')[-1]
+        return int(label_str)
+

@@ -33,7 +33,7 @@ def get_dataloaders(
         device: str = 'cpu'
         ):
     print("Initializing Dataset...")
-    dataset = IFXRadarDataset(radar_config, root_dir=config.data.dataset_path)
+    dataset = IFXRadarDataset(root_dir=config.data.dataset_path)
     print(f"loaded dataset from {config.data.dataset_path}, total samples: {len(dataset)}")
     train_dataset, val_dataset, test_dataset = split_dataset(dataset, seed=config.training.seed)
 

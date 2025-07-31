@@ -53,14 +53,14 @@ def main():
         'sample_rate_Hz': 2000000,
         'rx_mask': 7,
         'tx_mask': 1,
-        'if_gain_dB': 25,
+        'if_gain_dB': 31,
         'tx_power_level': 31,
         'start_frequency_Hz': 58.5e9,
         'end_frequency_Hz': 62.5e9,
         'num_chirps_per_frame': 32,
         'num_samples_per_chirp': 64,
         'chirp_repetition_time_s': 0.0003,
-        'frame_repetition_time_s': 1/33,
+        'frame_repetition_time_s': 0.33,
         'mimo_mode': 'off'
     }  
 
