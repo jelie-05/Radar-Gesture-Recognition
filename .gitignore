@@ -1,7 +1,9 @@
-data/*
+data
 zz_archieve/*
 venv/*
-outputs/*
+outputs
+runs
+saved_model
 
 ## Add these ignore rules as well
 build

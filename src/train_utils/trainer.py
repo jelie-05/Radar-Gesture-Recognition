@@ -162,19 +162,15 @@ class Trainer():
             self.writer = SummaryWriter(log_dir=tensorboard_dir)
 
             print(f"TensorBoard logs will be saved to: {tensorboard_dir}")
-
-        self.dummy_tensor = torch.randn((1024, 1024, 256), device=self.device)
     
     def train(self):
         if is_main_process():
             print(f"Starting from epoch {self.start_epoch + 1} of {self.config.training.epochs} total epochs")
         
         start_time = time.time()
+        best_val_loss = float('inf')
 
         for epoch in range(self.start_epoch, self.config.training.epochs):
-            # Random dummy tensor for increasing CUDA utility
-            dummy_output = self.dummy_tensor * torch.randn_like(self.dummy_tensor, device=self.device)
-
             # Set epoch for distributed sampler
             if hasattr(self.train_loader.sampler, 'set_epoch'):
                 self.train_loader.sampler.set_epoch(epoch)
@@ -196,6 +192,13 @@ class Trainer():
                     self.metrics_history['val_loss'].append(val_metrics['val_loss'])
 
                     # TODO: Evaluate best epoch
+                    if val_metrics['val_loss'] < best_val_loss:
+                        best_val_loss = val_metrics['val_loss']
+                        self.best_epoch = epoch
+                        self.best_metrics = val_metrics
+
+                        # Save best model checkpoint
+                        self.save_checkpoint(epoch, metrics=val_metrics, is_best=True)
 
             # Update Scheduler
             if self.scheduler is not None:
@@ -248,18 +251,12 @@ class Trainer():
         for batch_idx, batch in enumerate(pbar):
             # Measure dataloading time
             data_time.update(time.time() - start)
-            diff = time.time() - start
-            print(f"Data loading time: {diff:.4f} seconds") if is_main_process() else None
 
-            start_data = time.time()
             inputs = batch['time_proj'].to(self.device)
             labels = batch['class'].to(self.device)
-            end_data = time.time()
-            print(f"Data loading time: {end_data - start_data:.4f} seconds") if is_main_process() else None
 
             self.optimizer.zero_grad()
 
-            inference_time = time.time()
             if self.use_amp and self.scaler is not None:
                 with autocast():
                     outputs = self.model(inputs)
@@ -299,23 +296,14 @@ class Trainer():
             _, preds = torch.max(outputs, dim=1)
             targets = labels.cpu().numpy()
             preds = preds.cpu().numpy()
-
-            end_inference = time.time()
-            print(f"Inference time: {end_inference - inference_time:.4f} seconds") if is_main_process() else None
             
-            time_confusion = time.time()
             TP, FP, TN, FN = get_confusion_elements(targets, preds, n_classes=self.config.data.output_classes)
             TP_sum += TP
             FP_sum += FP
             TN_sum += TN
             FN_sum += FN
-            end_confusion = time.time()
-            print(f"Confusion matrix calculation time: {end_confusion - time_confusion:.4f} seconds") if is_main_process() else None
 
             # Update Metrics
-            loss_meter.update(loss.item(), inputs.size(0))
-            batch_time.update(time.time() - start)
-            print(f"Batch time: {batch_time.val:.4f} seconds") if is_main_process() else None
             if torch.cuda.is_available():
                 cuda_mem.update(torch.cuda.max_memory_allocated(device=None) / (1024 * 1024 * 1024))
 

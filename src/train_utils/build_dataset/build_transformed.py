@@ -9,6 +9,7 @@ from src.utils.common import do_inference_processing, do_inference_processing_RA
 import torch
 import json
 from pathlib import Path
+from tqdm import tqdm
 
 
 class TimeProject():
@@ -130,7 +131,7 @@ def main():
     radar_config = {'dev_config': dev_config, 
                     'num_rx_antennas': 3, 
                     'num_beams': 32,
-                    'max_angle_degrees': 40}
+                    'max_angle_degrees': 55}
     
     timeproject = TimeProject(radar_config)
 
@@ -140,7 +141,10 @@ def main():
     # Excluding files with suffix _fast, _slow, _wrist
     npz_files = [
         f for f in all_npz_files
-        if not any(suffix in f for suffix in ['_fast', '_slow', '_wrist'])
+        if not any(suffix in f for suffix in ['_fast', '_slow', '_wrist',
+                                              'user10_', 'user11_', 'user12_',
+                                              'user1_e1', 'user1_e2']
+        )
     ]
 
     # Storing the label and semantic mapping
@@ -154,7 +158,9 @@ def main():
             inputs = data['inputs']    # Shape: [n_recordings, ...]
             targets = data['targets']  # Shape: [n_recordings, ...]
 
-            for i in range(inputs.shape[0]):
+            progress_bar = tqdm(range(inputs.shape[0]), desc=f"Processing {base_name}")
+
+            for i in progress_bar:
                 """
                 Process the raw data into range-map or time-map.
                     1. Find frames in relevant window for observation (remove background)
@@ -191,6 +197,12 @@ def main():
                 # Naming Format: Which File - Which Recording - Which Class
                 input_filename = f"{base_name}_{idx_str}_{label_str}.npy"
                 np.save(os.path.join(output_inputs_dir, input_filename), time_maps)
+
+                progress_bar.set_postfix({'label': label})
+
+                del rtm, dtm, atm, time_maps
+                del frames_i, target_i
+                gc.collect()  # Clear memory after each save
 
             del inputs, targets
             gc.collect()  # Clear memory after each save

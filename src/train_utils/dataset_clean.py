@@ -207,6 +207,9 @@ class IFXRadarDataset(Dataset):
         frames = np.load(filename)  # [num_frames: observation length, n_antennas, chirps, samples]
         label = self.extract_idx(filename)
 
+        # Convert to torch
+        frames = torch.from_numpy(frames).float()
+
         return frames, label
 
     def extract_idx(self, filename):

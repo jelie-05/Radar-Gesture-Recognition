@@ -2,7 +2,7 @@ experiment_name: "radargesture"
 training:
   batch_size: 32
   epochs: 100
-  run_id: "250718_01"
+  run_id: "250801_01"
   use_amp: true
   gradient_clip: 1.0
   seed: 1
