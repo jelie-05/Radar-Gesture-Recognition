@@ -13,11 +13,13 @@ model = SimpleCNN(in_channels=input_channels, num_classes=num_classes)
 run_id = 'run_250801_04'
 output_path = f'outputs/radargesture/{run_id}/'
 model_path = os.path.join(output_path, 'checkpoints/best_model.pth')
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
 
 if os.path.exists(model_path):
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=False))
-    # model = torch.load(model_path, map_location=torch.device('cpu'))
-    # model = model.to('cuda' if torch.cuda.is_available() else 'cpu')
+    # model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=False))
+    checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(checkpoint['model_state_dict'])
 
     print("[Model] Loaded successfully.")
     input("[Model] Press Enter to continue...")
@@ -30,6 +32,8 @@ model.eval()
 # === 2. Export to ONNX ===
 dummy_input = torch.randn(1, input_channels, 32, 10)
 onnx_path = os.path.join(output_path, 'runtime_convert/model.onnx')
+if not os.path.exists(os.path.dirname(onnx_path)):
+    os.makedirs(os.path.dirname(onnx_path))
 
 torch.onnx.export(
     model,
@@ -47,7 +51,9 @@ print(f"[ONNX] Exported model to {onnx_path}")
 # === 3. Convert ONNX to TensorFlow SavedModel ===
 onnx_model = onnx.load(onnx_path)
 tf_rep = prepare(onnx_model)
-saved_model_dir = "saved_model"
+saved_model_dir = f"{output_path}/runtime_convert/saved_model"
+if not os.path.exists(saved_model_dir):
+    os.makedirs(saved_model_dir)
 tf_rep.export_graph(saved_model_dir)
 print(f"[TF] SavedModel exported to {saved_model_dir}")
 
@@ -56,6 +62,8 @@ converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
 tflite_model = converter.convert()
 
 tflite_path = os.path.join(output_path, 'runtime_convert/model.tflite')
+if not os.path.exists(os.path.dirname(tflite_path)):
+    os.makedirs(os.path.dirname(tflite_path))
 with open(tflite_path, "wb") as f:
     f.write(tflite_model)
 print(f"[TFLite] Model saved to {tflite_path}")
