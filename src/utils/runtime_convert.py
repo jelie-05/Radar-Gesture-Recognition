@@ -7,12 +7,18 @@ import tensorflow as tf
 import numpy as np
 
 # === 1. Load the PyTorch model ===
-model = SimpleCNN(in_channels=2, num_classes=4)
-date = '0613'
-model_path = f'runs/trained_models/train_{date}-last.pth'
+input_channels = 3
+num_classes = 5
+model = SimpleCNN(in_channels=input_channels, num_classes=num_classes)
+run_id = 'run_250801_04'
+output_path = f'outputs/radargesture/{run_id}/'
+model_path = os.path.join(output_path, 'checkpoints/best_model.pth')
 
 if os.path.exists(model_path):
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=False))
+    # model = torch.load(model_path, map_location=torch.device('cpu'))
+    # model = model.to('cuda' if torch.cuda.is_available() else 'cpu')
+
     print("[Model] Loaded successfully.")
     input("[Model] Press Enter to continue...")
 else:
@@ -22,8 +28,8 @@ else:
 model.eval()
 
 # === 2. Export to ONNX ===
-dummy_input = torch.randn(1, 2, 32, 10)
-onnx_path = f'runs/trained_models/train_{date}.onnx'
+dummy_input = torch.randn(1, input_channels, 32, 10)
+onnx_path = os.path.join(output_path, 'runtime_convert/model.onnx')
 
 torch.onnx.export(
     model,
@@ -49,7 +55,7 @@ print(f"[TF] SavedModel exported to {saved_model_dir}")
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
 tflite_model = converter.convert()
 
-tflite_path = f'runs/trained_models/train_{date}.tflite'
+tflite_path = os.path.join(output_path, 'runtime_convert/model.tflite')
 with open(tflite_path, "wb") as f:
     f.write(tflite_model)
 print(f"[TFLite] Model saved to {tflite_path}")

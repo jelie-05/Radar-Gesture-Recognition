@@ -1,25 +1,25 @@
 experiment_name: "radargesture"
 training:
-  batch_size: 2
-  epochs: 2
-  run_id: "test"
-  use_amp: true
+  batch_size: 32
+  epochs: 100
+  run_id: "run_test_2"
+  use_amp: false
   gradient_clip: 1.0
   seed: 1
   optimizer: 
     name: "adamw"
-    learning_rate: 0.001
+    learning_rate: 0.0001
     weight_decay: 0.01
   scheduler:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
   # dataset_path: '/home/swadiryus/projects/dataset_debug/'
-  dataset_path: '/home/swadiryus/projects/data_convert_time/'
+  dataset_path: '/home/swadiryus/projects/dataset_transformed/'
   input_channels: 3
   output_classes: 5
   pin_memory: false
-  num_workers: 0
-  persistent_workers: false
-  prefetch_factor: 
+  num_workers: 4
+  persistent_workers: true
+  prefetch_factor: 4
   drop_last: true

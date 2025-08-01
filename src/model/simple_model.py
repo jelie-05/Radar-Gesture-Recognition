@@ -10,24 +10,24 @@ class SimpleCNN(nn.Module):
         out_1 = in_channels * 4
         out_2 = out_1 * 2
         out_3 = out_2 * 2
-        out_4 = out_3 * 4
+        out_4 = out_3 * 2
 
         self.model = torch.nn.Sequential(
             nn.Conv2d(in_channels, out_1, kernel_size=3, stride=1),
             nn.BatchNorm2d(out_1),
             nn.ReLU(),
 
-            nn.Conv2d(out_1, out_1, kernel_size=3, stride=1),
-            nn.BatchNorm2d(out_1),
-            nn.ReLU(),
+            # nn.Conv2d(out_1, out_1, kernel_size=3, stride=1),
+            # nn.BatchNorm2d(out_1),
+            # nn.ReLU(),
 
             nn.Conv2d(out_1, out_2, kernel_size=3, stride=1),
             nn.BatchNorm2d(out_2),
             nn.ReLU(),
 
-            nn.Conv2d(out_2, out_2, kernel_size=3, stride=1),
-            nn.BatchNorm2d(out_2),
-            nn.ReLU(),
+            # nn.Conv2d(out_2, out_2, kernel_size=3, stride=1),
+            # nn.BatchNorm2d(out_2),
+            # nn.ReLU(),
 
             nn.Conv2d(out_2, out_3, kernel_size=3, stride=1),
             nn.BatchNorm2d(out_3),

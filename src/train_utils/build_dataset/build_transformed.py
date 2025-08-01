@@ -215,8 +215,12 @@ def main():
     with open(f'{output_dir}/labels_mapping.json', 'w') as f:
         json.dump(labels_mapping, f, indent=2)
 
+    print(f"Labels mapping saved to {output_dir}/labels_mapping.json")
+
     with open(f'{output_dir}/radar_config.json', 'w') as f:
         json.dump(radar_config, f, indent=2)
+
+    print(f"Radar configuration saved to {output_dir}/radar_config.json")
 
 if __name__=="__main__":
     main()

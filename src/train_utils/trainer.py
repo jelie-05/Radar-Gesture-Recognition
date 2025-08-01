@@ -184,14 +184,12 @@ class Trainer():
                 self.metrics_history['learning_rate'].append(lr)
 
             # Validation step
-            val_metrics = {}
             if self.val_loader is not None:
                 val_metrics = self._validate_epoch(epoch)
 
                 if is_main_process():
                     self.metrics_history['val_loss'].append(val_metrics['val_loss'])
 
-                    # TODO: Evaluate best epoch
                     if val_metrics['val_loss'] < best_val_loss:
                         best_val_loss = val_metrics['val_loss']
                         self.best_epoch = epoch
@@ -303,6 +301,9 @@ class Trainer():
             TN_sum += TN
             FN_sum += FN
 
+            # Update loss meter
+            loss_meter.update(loss.item(), inputs.size(0))
+
             # Update Metrics
             if torch.cuda.is_available():
                 cuda_mem.update(torch.cuda.max_memory_allocated(device=None) / (1024 * 1024 * 1024))
@@ -342,9 +343,9 @@ class Trainer():
             accuracy = (TP_sum + TN_sum) / (TP_sum + FP_sum + TN_sum + FN_sum) if (TP_sum + FP_sum + TN_sum + FN_sum) > 0 else 0
 
             self.writer.add_scalar("Loss/train", loss_meter.avg, epoch)
-            self.writer.add_scalar("Metrics/precision", precision, epoch)
-            self.writer.add_scalar("Metrics/recall", recall, epoch)
-            self.writer.add_scalar("Metrics/accuracy", accuracy, epoch)
+            self.writer.add_scalar("Metrics/train/precision", precision, epoch)
+            self.writer.add_scalar("Metrics/train/recall", recall, epoch)
+            self.writer.add_scalar("Metrics/train/accuracy", accuracy, epoch)
             self.writer.add_scalar('Memory/avg_cuda_memory_gb', cuda_mem.avg, epoch)
 
         # Gather all metrics across processes
@@ -473,10 +474,6 @@ class Trainer():
                     }
                     pbar.set_postfix(monitor)
 
-                # if is_main_process() and self.writer:
-                #     global_step = epoch * len(self.val_loader) + batch_idx
-                #     self.writer.add_scalar("Loss/val_batch", loss.item(), global_step)
-
                 if is_main_process():
                     pbar.set_postfix({'Loss': f'{loss_meter.val:.4f} ({loss_meter.avg:.4f})'})
 
@@ -491,9 +488,9 @@ class Trainer():
             accuracy = (TP_sum + TN_sum) / (TP_sum + FP_sum + TN_sum + FN_sum) if (TP_sum + FP_sum + TN_sum + FN_sum) > 0 else 0
 
             self.writer.add_scalar("Loss/val", loss_meter.avg, epoch)
-            self.writer.add_scalar("Metrics/precision", precision, epoch)
-            self.writer.add_scalar("Metrics/recall", recall, epoch)
-            self.writer.add_scalar("Metrics/accuracy", accuracy, epoch)
+            self.writer.add_scalar("Metrics/val/precision", precision, epoch)
+            self.writer.add_scalar("Metrics/val/recall", recall, epoch)
+            self.writer.add_scalar("Metrics/val/accuracy", accuracy, epoch)
             self.writer.add_scalar('Memory/cuda_memory_avg', cuda_mem.avg, epoch)
 
         # Gather all metrics across processes

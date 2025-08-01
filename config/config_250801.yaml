@@ -1,24 +1,24 @@
 experiment_name: "radargesture"
 training:
-  batch_size: 32
+  batch_size: 256
   epochs: 100
-  run_id: "250801_01"
-  use_amp: true
+  run_id: "250801_02"
+  use_amp: false
   gradient_clip: 1.0
   seed: 1
   optimizer: 
     name: "adamw"
-    learning_rate: 0.001
+    learning_rate: 0.0001
     weight_decay: 0.01
   scheduler:
     name: "none" #"cosine"
     warmup_epochs: 5
 data:
-  dataset_path: '/home/phd_li/dataset/radar_gesture_dataset/fulldataset/'
+  dataset_path: '/home/phd_li/jeremy/dataset/dataset_transformed/'
   input_channels: 3
   output_classes: 5
   pin_memory: false
-  num_workers: 0
+  num_workers: 8
   persistent_workers: true
   prefetch_factor: 4
   drop_last: true

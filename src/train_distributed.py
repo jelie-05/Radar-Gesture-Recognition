@@ -72,6 +72,12 @@ def main():
     try:
         config, args = load_config_from_args()
 
+        # # Save the config
+        # config_path = Path(f"outputs/{config.experiment_name}/config.yaml")
+        # config_path.parent.mkdir(parents=True, exist_ok=True)
+        # with open(config_path, 'w') as f:
+        #     config.to_yaml(f)
+
         # Handle resume options
         resume_training = getattr(args, 'resume', False)
         resume_from = getattr(args, 'resume_from', None)
