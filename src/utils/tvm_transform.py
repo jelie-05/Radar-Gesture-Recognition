@@ -54,7 +54,7 @@ def compile_model(mod, params, target="llvm", compile_to="so"):
     return lib
 
 
-def save_artifacts(lib, output_prefix="tvm", compile_to="so"):
+def save_artifacts(lib, output_prefix="tvm", compile_to="so", output_path="outputs"):
     if compile_to == "so":
         # cross = cc.cross_compiler("aarch64-poky-linux-g++")
         # lib.export_library(f"{output_prefix}_model.so", fcompile=cross)
@@ -66,12 +66,19 @@ def save_artifacts(lib, output_prefix="tvm", compile_to="so"):
             f.write(lib.get_graph_json())
 
     elif compile_to == "c":
-        export_model_library_format(lib, "model-micro.tar")
+        export_model_library_format(lib, f"{output_path}/model-micro.tar")
 
 
 def main():
-    model_path = "runs/trained_models/train_0613.tflite"
-    input_shape = [1, 2, 32, 10]
+    # model_path = "runs/trained_models/train_0613.tflite"
+    run_id = 'run_250801_04'
+    model_path = f'outputs/radargesture/{run_id}/runtime_convert/model.tflite'
+    output_path = f'outputs/radargesture/{run_id}/tvm_convert'
+    os.makedirs(output_path, exist_ok=True)
+
+    input_channels = 3
+    num_classes = 5
+    input_shape = [1, input_channels, 32, 10]
     input_dtype = "float32"
     compile_to = "c"
 
@@ -88,8 +95,8 @@ def main():
     print(mod)
 
     lib = compile_model(mod, params, target=target, compile_to=compile_to)
-    save_artifacts(lib, output_prefix="tvm", compile_to=compile_to)
-
+    save_artifacts(lib, output_prefix="tvm", compile_to=compile_to, output_path=output_path)
+    print(f"[TVM] Model compiled and saved to {output_path}")
 
 if __name__ == "__main__":
     main()

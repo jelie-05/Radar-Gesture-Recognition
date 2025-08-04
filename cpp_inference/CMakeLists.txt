@@ -80,16 +80,16 @@ target_link_options(run_so PRIVATE
 target_link_libraries(run_so PRIVATE pthread m)
 
 # === C Code Generation ===
-file(GLOB MODEL_MICRO_SRCS "model-micro/codegen/host/src/*.c")
+file(GLOB MODEL_MICRO_SRCS "model-micro-ifxdataset/codegen/host/src/*.c")
 
 add_executable(run_c main_c.cpp ${MODEL_MICRO_SRCS})
 target_include_directories(run_c PRIVATE
-    model-micro/codegen/host/include
+    model-micro-ifxdataset/codegen/host/include
     ${PROJECT_SOURCE_DIR}/include
 )
 
 add_executable(run_inference main_inference.cpp ${MODEL_MICRO_SRCS})
 target_include_directories(run_inference PRIVATE
-    model-micro/codegen/host/include
+    model-micro-ifxdataset/codegen/host/include
     ${PROJECT_SOURCE_DIR}/include
 )

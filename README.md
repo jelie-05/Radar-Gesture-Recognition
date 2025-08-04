@@ -37,7 +37,7 @@ To collect gesture data, run the following script:
 python src/utils/rawdata_collect.py
 ``` -->
 ```bash
-python -m src.utils.rawdata_collect
+python3 -m src.utils.rawdata_collect
 ```
 Before starting the recording, set the appropriate parameters in the script: `
 - `self.recording_type`: specify the target gesture class (e.g., 'push', 'pull', 'hold', 'nothing')
@@ -54,7 +54,7 @@ To annotate the recorded data, use the annotation tool:
 python src/utils/annotation.py
 ``` -->
 ```bash
-python -m src.utils.annotation
+python3 -m src.utils.annotation
 ```
 This script allows you to label and automatically store individual gesture segments in the collected recordings as CSV file. The annotation consists of `file_name`, `gesture`, `start_frame` defining where the gesture starts, and number of samples in the recording.
 
@@ -71,7 +71,7 @@ To train the model on annotated radar data, run from the root:
 python src/train.py
 ``` -->
 ```bash
-python -m src.train
+python3 -m src.train_distributed --config config/config_file.yaml
 ```
 This script loads the preprocessed dataset, trains the CNN on gesture classes, and saves the resulting model for inference.
 
@@ -82,7 +82,7 @@ To run real-time inference with radar input and visualize outputs:
 python src/realtime_inference.py
 ``` -->
 ```bash
-python -m src.realtime_inference
+python3 -m src.realtime_inference
 ```
 This script handles live radar input and displays both the Range-Time Map (RTM) and Doppler-Time Map (DTM) in real time. It also performs live classification and outputs the predicted gesture.
 
@@ -96,13 +96,13 @@ The trained PyTorch model is converted to ONNX or TFLite format, and then compil
 
 ### Converting Trained Model to Runtime
 
-To convert the PyTorch model to ONNX or TFLite format, run:
+To convert the PyTorch model to ONNX or TFLite format, change the `run_id` and run:
 
 <!-- ```bash
 python src/utils/runtime_convert.py
 ``` -->
 ```bash
-python -m src.utils.runtime_convert
+python3 -m src.utils.runtime_convert
 ```
 This creates an intermediate format suitable for further optimization.
 
@@ -116,7 +116,7 @@ To compile the model using TVM, run:
 python src/utils/tvm_transform.py
 ``` -->
 ```bash
-python -m src.utils.tvm_transform
+python3 -m src.utils.tvm_transform
 ```
 You can configure the output format by setting the compile_to argument:
 
@@ -130,7 +130,7 @@ The resulting .so file or .tar file (extracted) should be placed in `cpp_inferen
 
 ### C++ Deployment
 
-To compile the C++ runtime for the TVM-generated model, navigate to the `build/` directory and run the following:
+To compile the C++ runtime for the TVM-generated model, navigate to the `build/` directory. Adapt the CMakeList with your extracted folder (e.g., `model-micro`) and run the following:
 
 ```bash
 cd cpp_inference
@@ -150,3 +150,11 @@ Depending on the output format from TVM (.so or C source), run the corresponding
 ./run_c
 ```
 Make sure the compiled artifacts and tvm_model.so or C-generated source are correctly placed in the build directory before running. They should be in `cpp_inference/`.
+
+### Installation Packages
+
+Infineon Radar SDK: Download version ifxAvian 3.3.1 and run:
+```
+radar_sdk/radar_sdk/libs/linux_x64/
+python3 -m pip install ifxAvian-3.3.1-py3-none-any.whl
+``` 

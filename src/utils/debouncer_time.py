@@ -38,7 +38,7 @@ class DebouncerTime:
 
         if ram is not None:
             atm = ram.max(dim=1).values  # Angle-Time Map
-            self.atm_memory.append(atm)
+            self.atm_memory.append(atm.unsqueeze(1))
 
     def add_scan_np(self, frame, angle_map=None):
         if len(self.dtm_memory) >= self.memory_length:

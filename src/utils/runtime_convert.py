@@ -25,7 +25,7 @@ if os.path.exists(model_path):
     input("[Model] Press Enter to continue...")
 else:
     input("[Model] Model file not found. Please ensure the path is correct and the model is trained.")
-    model = model.to('cpu')
+model = model.to('cpu')
 
 model.eval()
 

@@ -43,8 +43,8 @@ void InitDSORegistry();  // You will implement this
 
 int main() {
     // === Allocate input/output buffers ===
-    float input_data[1 * 2 * 32 * 10];  // shape: [1, 2, 32, 10]
-    float output_data[1 * 4];          // shape: [1, 4]
+    float input_data[1 * 3 * 32 * 10];  // shape: [1, 2, 32, 10]
+    float output_data[1 * 5];          // shape: [1, 4]
 
     // === Define AOT executor structs ===
     tvmgen_default_inputs inputs;

@@ -148,22 +148,18 @@ class PredictionInference:
 
                 ####################### ANGLE MAP PROCESSING #######################
                 # Rearrange data for DBF
-                data_all_antennas_np = np.stack(data_all_antennas, axis=0)
-                data_all_antennas_np = data_all_antennas_np.transpose(1,2,0)
-
-                num_chirp_per_frame = data_all_antennas_np.shape[1]/2
-                num_samples_per_chirp = data_all_antennas_np.shape[0]
-
+                data_all_antennas_np = np.stack(data_all_antennas, axis=0).transpose(1,2,0)
                 rd_beam_formed = dbf.run(data_all_antennas_np)
 
+                num_samples_per_chirp = data_all_antennas_np.shape[0]
                 beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
                 for i_beam in range(self.num_beams):
-                    doppler_i = rd_beam_formed[:,:,i_beam]
-                    beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
+                    doppler_i = rd_beam_formed[:, :, i_beam]
+                    beam_range_energy[:, i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
 
-                max_energy = np.max(beam_range_energy)
                 scale = 150
-                beam_range_energy = scale*(beam_range_energy/max_energy - 1)
+                beam_range_energy = scale * (beam_range_energy / beam_range_energy.max()- 1)
+                range_angle = do_inference_processing_RAM(beam_range_energy)
 
                 # Find dominant angle of target
                 _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
@@ -173,14 +169,13 @@ class PredictionInference:
                 # self.plot.draw(beam_range_energy, f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees")
                 self.ra_queue.put((beam_range_energy.copy(), f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees"))
 
-                range_angle = do_inference_processing_RAM(beam_range_energy)
-
                 ################# RANGE-DOPPLER MAP PROCESSING #################
                 # Range-Doppler Map
                 range_doppler = do_inference_processing(data_all_antennas)
                 self.debouncer.add_scan(range_doppler, ram=range_angle)
 
                 dtm, rtm, atm = self.debouncer.get_scans()   # Only the first channel is used
+
                 rtm_tensor = torch.stack(rtm, dim=1).float().squeeze(2)
                 dtm_tensor = torch.stack(dtm, dim=1).float().squeeze(2)
                 atm_tensor = torch.stack(atm, dim=1).float().squeeze(2) if atm else None
