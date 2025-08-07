@@ -204,11 +204,14 @@ class IFXRadarDataset(Dataset):
     
     def __getitem__(self, idx):
         filename = self.input_paths[idx]
-        frames = np.load(filename)  # [num_frames: observation length, n_antennas, chirps, samples]
+        frames = np.load(filename)  
         label = self.extract_idx(filename)
 
         # Convert to torch
         frames = torch.from_numpy(frames).float()
+        
+        # reduced and take every 3 frames
+        frames = frames[:, :, ::3]
 
         return frames, label
 

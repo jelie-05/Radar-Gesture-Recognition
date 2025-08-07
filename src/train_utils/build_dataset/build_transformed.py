@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 class TimeProject():
-    def __init__(self, radar_config, observation_length=30, offset=0.6, noise_offset=0.1):
+    def __init__(self, radar_config, observation_length=30, offset=0.6, noise_offset=0.1, target_frequency=10.0):
         self.radar_config = radar_config
         self.num_rx_antennas = radar_config['num_rx_antennas']
         self.num_beams = radar_config['num_beams']
@@ -64,7 +64,8 @@ class TimeProject():
 
     def map_label_to_contiguous(self, idx_ori):
         semantic = self.tag_to_idx_semantic(idx_ori)
-        mapping = {1: 0, 2: 1, 3: 2, 6: 3, 7: 4, 0: 99}
+        # mapping = {1: 0, 2: 1, 3: 2, 6: 3, 7: 4}
+        mapping = {0: 0, 1: 1, 2: 2, 3: 3, 6: 4, 7: 5}  # Background is kept as class 0
         idx_contiguous = mapping.get(idx_ori, -1)
         return idx_contiguous, semantic
 
@@ -104,6 +105,9 @@ def main():
     parser.add_argument('--data_dir', type=Path, required=True, help='Path to data')
     parser.add_argument('--output_dir', type=Path, required=True, help='Output directory for saving')
     parser.add_argument('--format', type=str, default='time', help='time or range')
+    parser.add_argument('--observation_length', type=int, default=30, help='Length of observation window in seconds')
+    parser.add_argument('--target_frequency', type=float, default=10.0, help='Target frequency (Hz) for the radar considering processing time (lower than actual frequency)')
+    parser.add_argument('--none_class', action='store_true', help='Include the background class (0) in the output')
 
     args = parser.parse_args()
 
@@ -112,6 +116,8 @@ def main():
     data_dir = args.data_dir
     output_inputs_dir = os.path.join(output_dir, 'inputs/')
     os.makedirs(output_inputs_dir, exist_ok=True)
+
+    none_class = args.none_class
 
     # Rewrite dev config as dictionary
     dev_config = {
@@ -125,7 +131,7 @@ def main():
         'num_chirps_per_frame': 32,
         'num_samples_per_chirp': 64,
         'chirp_repetition_time_s': 0.0003,
-        'frame_repetition_time_s': 0.33,
+        'frame_repetition_time_s': 0.03,
         'mimo_mode': 'off'
     }  
     radar_config = {'dev_config': dev_config, 
@@ -133,7 +139,8 @@ def main():
                     'num_beams': 32,
                     'max_angle_degrees': 55}
     
-    timeproject = TimeProject(radar_config)
+    timeproject = TimeProject(radar_config, 
+                             observation_length=args.observation_length,)
 
     # Get all .npz files in the data directory
     all_npz_files = sorted(glob.glob(os.path.join(data_dir, '*.npz')))
@@ -141,14 +148,15 @@ def main():
     # Excluding files with suffix _fast, _slow, _wrist
     npz_files = [
         f for f in all_npz_files
-        if not any(suffix in f for suffix in ['_fast', '_slow', '_wrist',
-                                              'user10_', 'user11_', 'user12_',
-                                              'user1_e1', 'user1_e2']
+        if not any(suffix in f for suffix in ['_fast', '_slow', '_wrist',]
+                                            #   'user10_', 'user11_', 'user12_',
+                                            #   'user1_e1', 'user1_e2']
         )
     ]
 
     # Storing the label and semantic mapping
     labels = set()
+    count = 0
 
     # Extract per recording
     for npz_file in npz_files:
@@ -201,6 +209,45 @@ def main():
                 progress_bar.set_postfix({'label': label})
 
                 del rtm, dtm, atm, time_maps
+
+                if none_class and count < 5000: # Limit the number of background samples around same number of a gesture
+                    count += 1
+                    # Save the empty class (background) as well
+                    if np.random.choice([True, False]):
+                        # Case 1: before the gesture
+                        end_idx_none = start_idx
+                        start_idx_none = max(0, end_idx_none - args.observation_length)
+                        frame_range = range(start_idx_none, start_idx_none + args.observation_length)
+                    else:
+                        # Case 2: after the gesture
+                        start_idx_none = end_idx
+                        end_idx_none = min(start_idx_none + args.observation_length, frames_i.shape[0])
+                        frame_range = range(end_idx_none - args.observation_length, end_idx_none)
+
+                    for j in frame_range:
+                        rtm, dtm, atm = timeproject.project_to_time(frames_i[j])
+                        rtm_list.append(rtm)
+                        dtm_list.append(dtm)
+                        atm_list.append(atm)
+
+                    rtm = torch.cat(rtm_list, dim=1)
+                    dtm = torch.cat(dtm_list, dim=1)
+                    atm = torch.stack(atm_list, dim=1)
+
+                    time_maps = torch.stack([rtm, dtm, atm], dim=0) # Shape: (3, H, W)
+                    
+                    idx_str = f"{i+1:05d}"
+                    labelnone = 0  # Background class
+                    label_str = f"{labelnone:03d}"
+
+                    # Naming Format: Which File - Which Recording - Which Class
+                    input_filename = f"{base_name}_{idx_str}_{label_str}.npy"
+                    np.save(os.path.join(output_inputs_dir, input_filename), time_maps)
+
+                    progress_bar.set_postfix({'label': label})
+
+                    del rtm, dtm, atm, time_maps
+                    
                 del frames_i, target_i
                 gc.collect()  # Clear memory after each save
 

@@ -71,7 +71,7 @@ def save_artifacts(lib, output_prefix="tvm", compile_to="so", output_path="outpu
 
 def main():
     # model_path = "runs/trained_models/train_0613.tflite"
-    run_id = 'run_250801_04'
+    run_id = 'run_250805_02'
     model_path = f'outputs/radargesture/{run_id}/runtime_convert/model.tflite'
     output_path = f'outputs/radargesture/{run_id}/tvm_convert'
     os.makedirs(output_path, exist_ok=True)

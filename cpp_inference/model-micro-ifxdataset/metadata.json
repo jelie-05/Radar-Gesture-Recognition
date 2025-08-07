@@ -4,7 +4,7 @@
       "executors": [
         "aot"
       ],
-      "export_datetime": "2025-08-04 08:50:29Z",
+      "export_datetime": "2025-08-06 13:19:39Z",
       "external_dependencies": [
         {
           "short_name": "tvm_standalone_crt",
@@ -17,7 +17,7 @@
         "functions": {
           "main": [
             {
-              "constants_size_bytes": 243572,
+              "constants_size_bytes": 243672,
               "device": 1,
               "inputs": {
                 "serving_default_input:0": {
@@ -25,11 +25,11 @@
                   "size": 3840
                 }
               },
-              "io_size_bytes": 93524,
+              "io_size_bytes": 93528,
               "outputs": {
                 "PartitionedCall_0": {
                   "dtype": "float32",
-                  "size": 20
+                  "size": 24
                 }
               },
               "workspace_size_bytes": 77184
@@ -47,6 +47,15 @@
             },
             {
               "function_name": "tvmgen_default_fused_transpose_1",
+              "workspace": [
+                {
+                  "device": 1,
+                  "workspace_size_bytes": 0
+                }
+              ]
+            },
+            {
+              "function_name": "tvmgen_default_fused_nn_conv2d_add_nn_relu_3",
               "workspace": [
                 {
                   "device": 1,
@@ -91,7 +100,7 @@
               ]
             },
             {
-              "function_name": "tvmgen_default_fused_nn_conv2d_add_nn_relu",
+              "function_name": "tvmgen_default_fused_nn_contrib_dense_pack_add_1",
               "workspace": [
                 {
                   "device": 1,
@@ -109,16 +118,7 @@
               ]
             },
             {
-              "function_name": "tvmgen_default_fused_nn_conv2d_add_nn_relu_3",
-              "workspace": [
-                {
-                  "device": 1,
-                  "workspace_size_bytes": 0
-                }
-              ]
-            },
-            {
-              "function_name": "tvmgen_default_fused_nn_contrib_dense_pack_add_1",
+              "function_name": "tvmgen_default_fused_nn_conv2d_add_nn_relu",
               "workspace": [
                 {
                   "device": 1,

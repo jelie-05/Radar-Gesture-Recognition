@@ -8,9 +8,9 @@ import numpy as np
 
 # === 1. Load the PyTorch model ===
 input_channels = 3
-num_classes = 5
+num_classes = 6
 model = SimpleCNN(in_channels=input_channels, num_classes=num_classes)
-run_id = 'run_250801_04'
+run_id = 'run_250805_02'
 output_path = f'outputs/radargesture/{run_id}/'
 model_path = os.path.join(output_path, 'checkpoints/best_model.pth')
 if not os.path.exists(output_path):

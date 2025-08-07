@@ -108,7 +108,7 @@ class PredictionInference:
         # Initialize the model
         self.model = SimpleCNN(in_channels=input_channel, num_classes=self.num_classes)
         self.model.eval()
-        run_id = 'run_250801_04'
+        run_id = 'run_250805_02'
         output_path = f'outputs/radargesture/{run_id}/'
         model_path = os.path.join(output_path, 'checkpoints/best_model.pth')
 
@@ -239,7 +239,7 @@ class PredictionInference:
 
                 end_loop = time.time()
                 elapsed_time = end_loop-start_loop
-                sleep_time = max(0,0.1-elapsed_time)
+                sleep_time = max(0,0.03-elapsed_time)
                 print(f"[RTM] Loop time: {elapsed_time:.4f}s, sleeping for: {sleep_time:.4f}s")
                 time.sleep(sleep_time)
 
@@ -261,7 +261,7 @@ class PredictionInference:
             'num_chirps_per_frame': 32,
             'num_samples_per_chirp': 64,
             'chirp_repetition_time_s': 0.0003,
-            'frame_repetition_time_s': 0.33,
+            'frame_repetition_time_s': 0.03,
             'mimo_mode': 'off'
         }  
         radar_config = {'dev_config': dev_config, 
@@ -391,7 +391,7 @@ class Visualizer:
 
 if __name__ == "__main__":
     observation_length = 30
-    num_classes = 5
+    num_classes = 6
 
     inference = PredictionInference(observation_length=observation_length, num_classes=num_classes)
     stop_event = threading.Event()

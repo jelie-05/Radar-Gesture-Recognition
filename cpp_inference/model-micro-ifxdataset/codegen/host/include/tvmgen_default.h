@@ -13,7 +13,7 @@ extern "C" {
 /*!
  * \brief Output tensor PartitionedCall_0 size (in bytes) for TVM module "default" 
  */
-#define TVMGEN_DEFAULT_PARTITIONEDCALL_0_SIZE 20
+#define TVMGEN_DEFAULT_PARTITIONEDCALL_0_SIZE 24
 /*!
  * \brief Input tensor pointers for TVM module "default" 
  */
