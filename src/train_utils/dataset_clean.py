@@ -211,7 +211,7 @@ class IFXRadarDataset(Dataset):
         frames = torch.from_numpy(frames).float()
         
         # reduced and take every 3 frames
-        frames = frames[:, :, ::3]
+        # frames = frames[:, :, ::3]
 
         return frames, label
 

@@ -37,8 +37,14 @@ class DebouncerTime:
         self.rtm_memory.append(rtm)
 
         if ram is not None:
-            atm = ram.max(dim=1).values  # Angle-Time Map
-            self.atm_memory.append(atm.unsqueeze(1))
+            # atm = ram.max(dim=1).values  # Angle-Time Map
+            ram = ram[0,:,:]
+            angle_max = ram.max()
+            h, w = (ram == angle_max).nonzero(as_tuple=True)
+            atm = ram[h[0], :].unsqueeze(1)
+            print(f"atm: {atm}")
+            # input("enter...")
+            self.atm_memory.append(atm)
 
     def add_scan_np(self, frame, angle_map=None):
         if len(self.dtm_memory) >= self.memory_length:
@@ -50,7 +56,7 @@ class DebouncerTime:
 
         # Only add the first channel !!!
         processed_frame = frame[0, 0, :, :]
-        max_value = np.max(processed_frame)
+        max_value = processed_frame.max()
 
         # h, w = (processed_frame == max_value).nonzero(as_tuple=True)
         h, w = np.where(processed_frame == max_value)
@@ -64,8 +70,8 @@ class DebouncerTime:
         self.dtm_memory.append(dtm)
         self.rtm_memory.append(rtm)
 
-        if angle_map is not None:
-            atm = angle_map[h,:].unsqueeze(1)  # Angle-Time Map
+        if angle_map is not None:           
+            atm = angle_map.max(axis=1).values
             self.atm_memory.append(atm)
 
     def get_scans(self):

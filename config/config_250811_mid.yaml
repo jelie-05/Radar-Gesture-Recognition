@@ -1,4 +1,4 @@
-experiment_name: "model_simple"
+experiment_name: "model_mid"
 training:
   batch_size: 256
   epochs: 100
@@ -13,9 +13,9 @@ training:
   scheduler:
     name: "none" #"cosine"
     warmup_epochs: 5
-  model: 'simple'
+  model: 'mid'
 data:
-  dataset_path: '/home/swadiryus/projects/dataset_debug//dataset_small_transformed/'
+  dataset_path: '/home/phd_li/jeremy/dataset/dataset_transformed_all/'
   input_channels: 3
   output_classes: 6
   pin_memory: false

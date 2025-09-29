@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 class TimeProject():
-    def __init__(self, radar_config, observation_length=30, offset=0.6, noise_offset=0.1, target_frequency=10.0):
+    def __init__(self, radar_config, observation_length=30, offset=0.7, noise_offset=0.1, target_frequency=10.0):
         self.radar_config = radar_config
         self.num_rx_antennas = radar_config['num_rx_antennas']
         self.num_beams = radar_config['num_beams']
@@ -83,7 +83,7 @@ class TimeProject():
         start_idx = max(0, start_of_gesture - target_position_start)   
         
         # Add random offset/noise to start_idx
-        delta = int(self.noise_offset * self.observation_length)
+        delta = 1
         start_idx += torch.randint(-delta, delta + 1, (1,)).item()
         
         end_idx = start_idx + self.observation_length
@@ -91,7 +91,7 @@ class TimeProject():
         if end_idx > label_tensor.shape[0]:
             end_idx = len(label_tensor)
             start_idx = end_idx - self.observation_length
-            start_idx = max(0, start_idx)
+            # start_idx = max(0, start_idx)
 
         return start_idx, end_idx
 
@@ -99,21 +99,34 @@ def main():
     """
         This function converts and extracts the IFX Dataset from raw data (.npz) into time maps (.npy).
         It outputs the radar configuration used in recording and new labeling (with semantic).
+
+        Checklist:
+            1. Ensure the radar configuration is correct.
+            2. Ensure the observation length is set correctly.
+                a. Dataset is recorded w/ frequency of 30 Hz, so observation length of 30 corresponds to 1 second.
+                b. Stepsize n is used to reduce number of frames (lower frequency). n = 3 reduce the frequency to 10 Hz.
+            3. Shifting in observation windows
+            4. Randomize "Background" class
     """
     # Argument parser for command line arguments
     parser = argparse.ArgumentParser(description="Convert Dataset into transformed .npy format (Range Map or Time Map)")
     parser.add_argument('--data_dir', type=Path, required=True, help='Path to data')
     parser.add_argument('--output_dir', type=Path, required=True, help='Output directory for saving')
     parser.add_argument('--format', type=str, default='time', help='time or range')
-    parser.add_argument('--observation_length', type=int, default=30, help='Length of observation window in seconds')
-    parser.add_argument('--target_frequency', type=float, default=10.0, help='Target frequency (Hz) for the radar considering processing time (lower than actual frequency)')
+    parser.add_argument('--observation_length', type=int, default=30, help='Length of observation window in frames')
+    # parser.add_argument('--target_frequency', type=float, default=10.0, help='Target frequency (Hz) for the radar considering processing time (lower than actual frequency)')
     parser.add_argument('--none_class', action='store_true', help='Include the background class (0) in the output')
+    parser.add_argument('--offset', type=float, default=0.7, help='Offset for the start of the observation window')
+    parser.add_argument('--stepsize', type=int, default=1, help='Stepsize for reducing the number of frames (e.g., 3 for 10 Hz from 30 Hz)')
 
     args = parser.parse_args()
 
     # Initialize folders
     output_dir = args.output_dir
     data_dir = args.data_dir
+    observation_length = args.observation_length
+    step_size = args.stepsize
+
     output_inputs_dir = os.path.join(output_dir, 'inputs/')
     os.makedirs(output_inputs_dir, exist_ok=True)
 
@@ -140,7 +153,7 @@ def main():
                     'max_angle_degrees': 55}
     
     timeproject = TimeProject(radar_config, 
-                             observation_length=args.observation_length,)
+                             observation_length=observation_length,)
 
     # Get all .npz files in the data directory
     all_npz_files = sorted(glob.glob(os.path.join(data_dir, '*.npz')))
@@ -187,7 +200,7 @@ def main():
                 # Extract observation window
                 start_idx, end_idx = timeproject.extract_observation_window(target_torch)
                 rtm_list, dtm_list, atm_list = [], [], []
-                for j in range(start_idx, end_idx):
+                for j in range(start_idx, end_idx, step_size):
                     rtm, dtm, atm = timeproject.project_to_time(frames_i[j])
                     rtm_list.append(rtm)
                     dtm_list.append(dtm)
@@ -210,19 +223,22 @@ def main():
 
                 del rtm, dtm, atm, time_maps
 
-                if none_class and count < 5000: # Limit the number of background samples around same number of a gesture
+                delta = 10
+                rtm_list, dtm_list, atm_list = [], [], []
+                if none_class and count < 7000: # Each class has around 5000 samples
                     count += 1
                     # Save the empty class (background) as well
                     if np.random.choice([True, False]):
                         # Case 1: before the gesture
-                        end_idx_none = start_idx
-                        start_idx_none = max(0, end_idx_none - args.observation_length)
-                        frame_range = range(start_idx_none, start_idx_none + args.observation_length)
+                        end_idx_none_mark = start_idx 
+                        start_idx_none = max(0, end_idx_none_mark - observation_length - torch.randint(0, delta+1, (1,)).item())
+                        frame_range = range(start_idx_none, start_idx_none + observation_length, step_size)
+
                     else:
                         # Case 2: after the gesture
-                        start_idx_none = end_idx
-                        end_idx_none = min(start_idx_none + args.observation_length, frames_i.shape[0])
-                        frame_range = range(end_idx_none - args.observation_length, end_idx_none)
+                        start_idx_none_mark = end_idx 
+                        end_idx_none = min(start_idx_none_mark + observation_length + torch.randint(0, delta+1, (1,)).item(), frames_i.shape[0])
+                        frame_range = range(end_idx_none - observation_length, end_idx_none, step_size)
 
                     for j in frame_range:
                         rtm, dtm, atm = timeproject.project_to_time(frames_i[j])
@@ -237,14 +253,15 @@ def main():
                     time_maps = torch.stack([rtm, dtm, atm], dim=0) # Shape: (3, H, W)
                     
                     idx_str = f"{i+1:05d}"
-                    labelnone = 0  # Background class
+
+                    label_none = 0  # Background class
+                    labelnone, semantic_none = timeproject.map_label_to_contiguous(int(label_none))
+                    labels.add((labelnone, semantic_none))
                     label_str = f"{labelnone:03d}"
 
                     # Naming Format: Which File - Which Recording - Which Class
                     input_filename = f"{base_name}_{idx_str}_{label_str}.npy"
                     np.save(os.path.join(output_inputs_dir, input_filename), time_maps)
-
-                    progress_bar.set_postfix({'label': label})
 
                     del rtm, dtm, atm, time_maps
                     

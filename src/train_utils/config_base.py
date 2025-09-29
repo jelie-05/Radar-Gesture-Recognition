@@ -22,6 +22,7 @@ class TrainingConfig:
     seed: int = 1
     optimizer: OptimizerConfig = OptimizerConfig()
     scheduler: SchedulerConfig = SchedulerConfig()
+    model: str = "simple"  # Options: 'simple', 'mid'
 
 @dataclass
 class DataConfig:

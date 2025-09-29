@@ -14,7 +14,7 @@ from src.train_utils.distributed import (
     get_world_size,
     init_seeds
 )
-from src.model.simple_model import SimpleCNN
+from src.model.simple_model import SimpleCNN, MidCNN
 from src.train_utils.utils import load_config_from_args
 from src.train_utils.trainer import Trainer
 
@@ -178,8 +178,13 @@ def main():
                 print(f"Run ID: {run_id}")                
 
         # Create model
-        model = SimpleCNN(in_channels=config.data.input_channels, num_classes=config.data.output_classes).to(device=device)
-        
+        if config.training.model == 'simple':
+            model = SimpleCNN(in_channels=config.data.input_channels, num_classes=config.data.output_classes).to(device=device)
+        elif config.training.model == 'mid':
+            model = MidCNN(in_channels=config.data.input_channels, num_classes=config.data.output_classes).to(device=device)
+        else:
+            raise ValueError(f"Model {config.training.model} is not implemented")
+
         # Print model summary if main process
         if is_main_process():
             try:

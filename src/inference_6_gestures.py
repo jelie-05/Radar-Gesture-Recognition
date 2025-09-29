@@ -112,6 +112,11 @@ class PredictionInference:
         output_path = f'outputs/radargesture/{run_id}/'
         model_path = os.path.join(output_path, 'checkpoints/best_model.pth')
 
+        mapping_path = '/home/swadiryus/projects/dataset_transformed/labels_mapping.json'
+        with open(mapping_path, 'r') as f:
+            self.mapping = json.load(f)
+            print(f"mapping: {self.mapping}")
+
         if os.path.exists(model_path):
             # model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=False))
             checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
@@ -123,14 +128,10 @@ class PredictionInference:
             input("[Model] Model file not found. Please ensure the path is correct and the model is trained.")
         self.model = self.model.to('cpu')
 
-        mapping_path = '/home/swadiryus/projects/dataset_transformed/labels_mapping.json'
-        with open(mapping_path, 'r') as f:
-            self.mapping = json.load(f)
-
     def run(self):
         with Avian.Device() as device:
-
-            algo = DopplerAlgo(device.get_config(), self.num_rx_antennas)
+            dev_config = device.get_config()
+            algo = DopplerAlgo(dev_config, self.num_rx_antennas)
             dbf = DBF(self.num_rx_antennas, num_beams = self.num_beams, max_angle_degrees =self.max_angle_degrees)
 
             while True:
@@ -138,57 +139,32 @@ class PredictionInference:
                 frame_data = device.get_next_frame()
 
                 data_all_antennas = []
+                rd_spectrum = np.zeros((dev_config.num_samples_per_chirp, 2*dev_config.num_chirps_per_frame, self.num_rx_antennas), dtype=complex)
                 for i_ant in range(self.num_rx_antennas):
-                    mat = frame_data[i_ant, :, :]
-
-                    # Doppler Map
-                    dfft_dbfs = algo.compute_doppler_map(mat, i_ant)
+                    dfft_dbfs = algo.compute_doppler_map(frame_data[i_ant], i_ant)
                     data_all_antennas.append(dfft_dbfs)
+                    rd_spectrum[:,:,i_ant] = dfft_dbfs
 
                 ####################### ANGLE MAP PROCESSING #######################
-                # Rearrange data for DBF
-                data_all_antennas_np = np.stack(data_all_antennas, axis=0)
-                data_all_antennas_np = data_all_antennas_np.transpose(1,2,0)
+                # # Rearrange data for DBF
+                # data_all_antennas_np = np.stack(data_all_antennas, axis=0)
+                # data_all_antennas_np = data_all_antennas_np.transpose(1, 2, 0)
 
-                num_samples_per_chirp = data_all_antennas_np.shape[0]
+                # num_samples_per_chirp = data_all_antennas_np.shape[0]
 
-                rd_beam_formed = dbf.run(data_all_antennas_np)
+                # rd_beam_formed = dbf.run(data_all_antennas_np)
+                rd_beam_formed = dbf.run(rd_spectrum)
 
-                beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
+                beam_range_energy = np.zeros((dev_config.num_samples_per_chirp, self.num_beams))
                 for i_beam in range(self.num_beams):
                     doppler_i = rd_beam_formed[:,:,i_beam]
                     beam_range_energy[:,i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
 
-                max_energy = np.max(beam_range_energy)
+                max_energy = beam_range_energy.max()
                 scale = 150
-                beam_range_energy = scale*(beam_range_energy/max_energy - 1)
+                beam_range_energy = scale * (beam_range_energy / max_energy - 1)
 
-                # Find dominant angle of target
-                _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
-                angle_degrees = np.linspace(-self.max_angle_degrees, self.max_angle_degrees, self.num_beams)[idx]
-
-                # Plot Range-Angle Map
-                # self.plot.draw(beam_range_energy, f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees")
-                self.ra_queue.put((beam_range_energy.copy(), f"Range-Angle map using DBF, angle={angle_degrees:+02.0f} degrees"))
-
-                range_angle = do_inference_processing_RAM(beam_range_energy)
-
-                ####################### ANGLE MAP PROCESSING #######################
-                # Rearrange data for DBF
-                data_all_antennas_np = np.stack(data_all_antennas, axis=0).transpose(1,2,0)
-                rd_beam_formed = dbf.run(data_all_antennas_np)
-
-                num_samples_per_chirp = data_all_antennas_np.shape[0]
-                beam_range_energy = np.zeros((num_samples_per_chirp, self.num_beams))
-                for i_beam in range(self.num_beams):
-                    doppler_i = rd_beam_formed[:, :, i_beam]
-                    beam_range_energy[:, i_beam] += np.linalg.norm(doppler_i, axis=1) / np.sqrt(self.num_beams)
-
-                scale = 150
-                beam_range_energy = scale * (beam_range_energy / beam_range_energy.max()- 1)
-                range_angle = do_inference_processing_RAM(beam_range_energy)
-
-                # Find dominant angle of target
+                # Find dominant angle of target for visualization
                 _, idx = np.unravel_index(beam_range_energy.argmax(), beam_range_energy.shape)
                 angle_degrees = np.linspace(-self.max_angle_degrees, self.max_angle_degrees, self.num_beams)[idx]
 
@@ -198,6 +174,7 @@ class PredictionInference:
 
                 ################# RANGE-DOPPLER MAP PROCESSING #################
                 # Range-Doppler Map
+                range_angle = do_inference_processing_RAM(beam_range_energy)
                 range_doppler = do_inference_processing(data_all_antennas)
                 self.debouncer.add_scan(range_doppler, ram=range_angle)
 
@@ -219,7 +196,7 @@ class PredictionInference:
                     # max index 
                     max_idx = torch.argmax(output, dim=1).item()
                     label = self.get_class_name(max_idx)
-                    print(f"[RTM] Detected class: {label} with probability: {prediction.max() * 100:.2f}%")
+                    print(f"[RTM] Detected class: {label}; idx: {max_idx} with probability: {prediction.max() * 100:.2f}%")
 
 
                 if self.prev_rtm_tensor is not None:
@@ -336,7 +313,7 @@ class Visualizer:
         ax_angle.set_title('Angle over Time')
         ax_angle.set_xlabel('Time (frames)')
         ax_angle.set_ylabel('Angle (°)')
-        img3 = ax_angle.imshow(np.zeros((32, self.prob_history_length)), aspect='auto', origin='lower', vmin=0.0, vmax=1.25)
+        img3 = ax_angle.imshow(np.zeros((32, self.prob_history_length)), aspect='auto', origin='lower', vmin=-100, vmax=0)
         self.fig.colorbar(img3, ax=ax_angle, orientation='vertical', label='Intensity')
         yield img3
 

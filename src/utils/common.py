@@ -29,15 +29,19 @@ def do_inference_processing(range_doppler: np.array):
 
 def do_processing_RAM(range_angle: np.array):
     # Normalizing to [0, 1]
-    range_angle = np.abs(range_angle)
-    for index, channel in enumerate(range_angle):
-        min = np.min(channel)
-        max = np.max(channel)
-        range_angle[index] = (channel - min) / (max - min)
+    # range_angle = np.abs(range_angle)
+    range_angle = np.expand_dims(range_angle, axis=0)
+    # for index, channel in enumerate(range_angle):
+    #     min = np.min(channel)
+    #     max = np.max(channel)
+    #     range_angle[index] = (channel - min) / (max - min)
 
-    range_angle = np.transpose(range_angle, (1, 0))
+    # range_angle = np.transpose(range_angle, (1, 0))
+    range_angle = np.transpose(range_angle, (2, 1, 0))
     range_angle = resize(range_angle, dsize=(32, 32), interpolation=INTER_AREA)
-    range_angle = np.transpose(range_angle, (1, 0))
+    # range_angle = np.transpose(range_angle, (1, 0))
+    range_angle = np.expand_dims(range_angle, axis=2)
+    range_angle = np.transpose(range_angle, (2, 1, 0))
 
     return range_angle
 
