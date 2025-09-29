@@ -58,6 +58,16 @@ python3 -m src.utils.annotation
 ```
 This script allows you to label and automatically store individual gesture segments in the collected recordings as CSV file. The annotation consists of `file_name`, `gesture`, `start_frame` defining where the gesture starts, and number of samples in the recording.
 
+**Using IFX Dataset**
+```
+python3 -m src.train_utils.build_dataset.build_transformed \
+  --data_dir /home/phd_li/dataset/radar_gesture_dataset/fulldataset/ \
+  --output_dir (output directory) \
+  --none_class 
+  --stepsize 3
+```
+`none_class`: include none class. `step_size`: use frame every `step_size` to reduce the frequency of the dataset.
+
 ---
 
 ### Train & Inference
@@ -74,6 +84,9 @@ python src/train.py
 python3 -m src.train_distributed --config config/config_file.yaml
 ```
 This script loads the preprocessed dataset, trains the CNN on gesture classes, and saves the resulting model for inference.
+
+**Config File**
+`input_channels` corresponds to range-doppler-angle channel. `output_classes` corresponds to number of gestures.
 
 **Inference**
 
